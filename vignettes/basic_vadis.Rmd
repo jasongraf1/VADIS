@@ -41,7 +41,7 @@ library(VADIS)
 ```
 
 ```{r echo = F}
-library(testVADIS)
+library(VADIS)
 ```
 
 # Setup
@@ -54,8 +54,8 @@ For this tutorial, we will examine how the constraints on the placement of postv
 We'll use a version of the dataset of particle verb constructions used by @GrafmillerToappear. Full details of the dataset can be found here: [https://osf.io/x8vyw/](https://osf.io/x8vyw/). 
 
 ```{r}
-# Load in the dataset
-pv <- readRDS("data/particle_verbs_short.rds")
+# call the dataset 
+pv <- particle_verbs_short
 names(pv)
 ```
 

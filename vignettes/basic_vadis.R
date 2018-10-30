@@ -17,11 +17,11 @@ library(phangorn) # for neighborNets
 #  library(VADIS)
 
 ## ----echo = F------------------------------------------------------------
-library(testVADIS)
+library(VADIS)
 
 ## ------------------------------------------------------------------------
-# Load in the dataset
-pv <- readRDS("data/particle_verbs_short.rds")
+# call the dataset 
+pv <- particle_verbs_short
 names(pv)
 
 ## ----fig.height = 5, fig.width=6-----------------------------------------
