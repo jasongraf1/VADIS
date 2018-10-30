@@ -1,0 +1,44 @@
+#' Create Table of Variable Importance Rankings for VADIS analysis
+#'
+#' @param mod_list A list of random forest model objects, generated with \code{fit_vadis_rf()}. Currently supports objects of \code{\link[party]{RandomForest-class}}, \code{\link[ranger]{ranger}}, and \code{\link[randomForest]{randomForest}}
+#' @param path Path in which to save the output (as \code{.csv} file). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.
+#' @param conditional logical. Should unconditional (default) or conditional permutation variable importance be computed. Only applies to \code{RandomForest-class} models from the \code{\link[party]{party}} package.
+#'
+#' @author Jason Grafmiller
+#'
+#' @details The function loops through a list of random forest objects, extracts the variable importance estimates, and compiles them in a single dataframe.
+#' For forests fit with \code{ranger} or \code{randomForest}, the \code{importance} argument must be specified.
+#' #'
+#' @return A dataframe
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' fmla <- Type ~ PossrAnimacyBin + PossrWordC + PossmWordC + FinalSibilant +
+#'   TypeTokenRatio + ProtoSemanticRelation + PossrExpType
+#'
+#' rf_fnc <- function(x) ranger::ranger(fmla, data = x, importance = "permutation")
+#'
+#' rf_list <- fit_models(brown_genitives, split.by = "Genre", fit.func = rf_fnc, path = FALSE)
+#'
+#' create_rank_table(rf_list, path = FALSE)
+#' }
+create_rank_table <- function(mod_list, conditional = FALSE) {
+  # identify the class of models
+  type <- class(mod_list[[1]])
+  if (type[1] == "ranger"){
+    varimp_tab <- plyr::ldply(mod_list, .fun = function(m) ranger::importance(m))
+
+  } else if (type[1] == "RandomForest"){
+    if (conditional){
+      cat(paste("Computing varimpAUC() for", length(mod_list), "models. This may take some time...\nIf it takes too long, consider setting conditional = FALSE."))
+    } else cat(paste("Computing varimpAUC() for", length(mod_list), "models. This may take some time..."))
+    varimp_tab <- lapply(mod_list, FUN = function(m) party::varimpAUC(m, conditional = conditional)) %>%
+      as.data.frame()
+  } else if (type == "randomForest"){
+    varimp_tab <- lapply(mod_list, FUN = function(m) randomForest::importance(m)) %>%
+    as.data.frame()
+  } else stop("I don't recognize this class of random forest model...")
+  return (varimp_tab)
+}

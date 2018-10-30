@@ -1,0 +1,338 @@
+---
+title: "Introduction to the VADIS method"
+author: "Jason Grafmiller"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    df_print: kable
+    fig_caption: yes
+vignette: >
+  %\VignetteIndexEntry{Basic application of VADIS method}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: vadis_refs.bib
+---
+
+```{r setup, include = FALSE}
+library(knitr)
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+knitr::opts_knit$set(root.dir = normalizePath('../')) # set working directory as root
+```
+
+This vignette introduces the basics of the Variation-Based Distance & Similarity Modeling (**VADIS**) method and demonstrates how to use the functions in the `PACKAGE` (Name suggestions?). The VADIS method builds upon techniques in comparative sociolinguistics and quantitative dialectometry for quantifying the similarity between varieties and dialects as captured by correspondences among the ways in which language users choose between different ways of saying the same thing. For details of the method and theoretical motivation see @SzmrecsanyiInprep and @GrafmillerToappear. 
+
+The basic libraries you'll need for this vignette.
+
+```{r libs, comment=F, message=FALSE, error=FALSE}
+library(tidyverse) # for data wrangling
+library(lme4) # for regression models
+library(party) # for random forests
+library(phangorn) # for neighborNets
+```
+
+Install and load the `PACKAGE`.
+
+```{r eval = F}
+devtools::install_github("jasongraf1/VADIS")
+library(VADIS)
+```
+
+```{r echo = F}
+library(testVADIS)
+```
+
+# Setup
+
+For this tutorial, we will examine how the constraints on the placement of postverbal particles, e.g. *off* in examples (a) and (b), vary across different varities of English. 
+
+(a) *She uses a pair of long metal scissors to **cut off** a length of it.* [continuous order]
+(b) *She uses a pair of long metal scissors to **cut** a length of it **off**.* [split order] 
+
+We'll use a version of the dataset of particle verb constructions used by @GrafmillerToappear. Full details of the dataset can be found here: [https://osf.io/x8vyw/](https://osf.io/x8vyw/). 
+
+```{r}
+# Load in the dataset
+pv <- readRDS("data/particle_verbs_short.rds")
+names(pv)
+```
+
+This dataset contains approximately 1000 tokens from nine different varities of English from around the world. 
+
+```{r fig.height = 5, fig.width=6}
+ggplot(pv, aes(Variety, fill = Response)) +
+  geom_bar(position = "dodge")
+```
+
+With VADIS we model particle placement across these nine varieties separately, so we first split the data up into nine individual datasets.
+
+```{r}
+# create list of dataframes
+data_list <- split(pv, pv$Variety, drop = TRUE) # drop unused levels
+names(data_list)
+```
+
+# VADIS steps
+
+The VADIS method is designed to measure the degree of (dis)similarity among "variable grammars" of different dialects or varieties, where a variable grammar is understood as the set of constraints (a.k.a. predictors or "conditioning factors") governing the choice between two or more linguistic variants. Variants can be individual lexical items (*sneakers* vs. *trainers* vs. *tennis shoes*), grammatical constructions (*give me the book* vs. *give the book to me*), or phonetic realizations of a particular phoneme (e.g. [ʊ] vs. [ʌ] pronunciations of the **<span style="font-family:Times New Roman, Times, serif">STRUT</span>** vowel).  
+
+VADIS take inspiration from comparative sociolinguistics [see e.g. @Tagliamonte2013], which evaluates the relatedness between varieties and dialects based on how similar the conditioning of variation is in these varieties. Comparative sociolinguists rely on three lines of evidence to determine relatedness:  
+
+1. Are the same constraints significant across varieties? 
+2. Do the constraints have the same strength across varieties? 
+3. Is the constraint hierarchy similar?
+
+Below we'll go through the steps for calculating and assessing each of these lines of evidence.
+
+
+## Step 1
+
+In the first step we identify the most important constraints on variation. We know from prior research that many different factors influence the choice of particle placement, including:
+
+- Length, definiteness, concreteness, and discourse accessibility of the direct object (*note personal pronoun direct objects are excluded from this dataset*)
+- The semantic idiomaticity of the verb-particle
+- The presence of a directional PP following the verb phrase 
+- predictability of the particle given the verb, and the predictability of the verb given the particle
+- Prior use of V-NP-P or V-P-NP orders
+- The register, genre and/or mode (e.g. informal speech has much more V-NP-P tokens than formal writing) 
+
+These are the predictors we'll include in our variable grammar models. We'll define our model formula using this set.
+
+```{r}
+f1 <- Response ~ DirObjWordLength + DirObjDefiniteness + DirObjGivenness + DirObjConcreteness + DirObjThematicity +
+  DirectionalPP + PrimeType + Semantics + Surprisal.P + Surprisal.V + Register
+```
+
+## Step 2
+
+We now fit logistic regression models to the data (sub)sets. We'll use fixed-effects only models for this vignette since they are faster to compute, but I'll give an example of the code for a mixed-effects model below.
+
+First we'll define our modeling function so that we can quickly apply the function to each of the datasets in `data_list`.
+
+```{r}
+reg_func <- function(d) {
+  glm(f1, d, family = binomial)
+}
+```
+
+Next we simply loop over the datasets in `data_list` and apply the modeling function using `lapply()`.
+
+```{r}
+glm_list <- lapply(data_list, FUN = reg_func)
+```
+
+Mixed-effects models would be run in much the same fashion. We just have to define a new formula and different modeling function. Since mixed-models take a bit longer to run, we'll only use fixed-effects models here.
+
+```{r eval = F}
+# update formula with by-verb and by-particle random intercepts 
+f2 <- update(f1, .~ . + (1|Verb) + (1|Particle))
+
+# set optimizer controls to help convergence
+reg_func2 <- function(d) {
+  glmer(f1, d, family = binomial, 
+    control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 1e7)))
+}
+
+# loop through the datasets and fit the model
+glmer_list <- lapply(data_list, FUN = reg_func2)
+```
+
+
+## Step 3 
+
+In step 3 we look at the first line of evidence: "Are the same constraints significant across varieties?"
+
+We do this with the `vadis_line1()` function. This function returns a list with three elements.
+
+- A table `signif.table` of predictor significance values, including the intercept. 1 = significant, 0 = nonsignificant
+- A distance matrix based on `signif.table`. For this function distances are [Hamming distances](https://en.wikipedia.org/wiki/Hamming_distance), and the intercept is excluded when calculating the distances.
+- A table `similarity.coefs` of similarity coeficients measured for each variety.
+
+The `path` argument tells the function where to save the output. The default setting saves a file `vadis_line1_output_2018-Oct-30_15.04.rds` to the current working directory. Note that the output of the function is a list object, so it saves it as an R data object file (`.rds`). Setting `path = FALSE` tells it not to save anything.
+
+```{r}
+signif_line <- vadis_line1(glm_list, path = FALSE)
+```
+
+Examine each of the elements.
+
+```{r}
+signif_line$signif.table
+```
+
+```{r}
+signif_line$distance.matrix
+```
+
+```{r}
+signif_line$similarity.coefs
+```
+
+
+## Step 4
+
+In the next step we look at the second line of evidence. We do this with the `vadis_line2()` function. This function also returns a list with three elements.
+
+- A table `coef.table` of predictor coefficients, including the intercept.
+- A distance matrix based on `coef.table`. For this function distances are [Euclidean distances](https://en.wikipedia.org/wiki/Euclidean_distance), and the intercept is excluded when calculating the distances.
+- A table `similarity.coefs` of similarity coeficients measured for each variety.
+
+```{r}
+coef_line <- vadis_line2(glm_list, path = FALSE)
+```
+
+```{r}
+coef_line$coef.table %>% 
+  round(3)
+```
+
+```{r}
+coef_line$distance.matrix %>% 
+  round(3)
+```
+
+```{r}
+coef_line$similarity.coefs
+```
+
+
+Note that both `vadis_line1()` and `vadis_line2()` work the same with `glm` and `glmer` models.
+
+## Step 5
+
+In this step we create the conditional random forest models from which we'll calculate the variable importance rankings for the third line of evidence. First we define the function for growing the forests. We'll use the `cforest()` function in `party` for this tutorial, but the package also supports random forests generated with `ranger`.
+
+```{r}
+crf_func <- function(d) {
+  cforest(f1, d, controls = cforest_unbiased(ntree = 500, mtry = 3))
+}
+```
+
+Now we loop over the datasets in `data_list` and apply the modelling function just like above.
+
+```{r}
+crf_list <- lapply(data_list, FUN = crf_func)
+```
+
+This gives us a list of random forests models similar to our list of regression models above.
+
+## Step 6
+
+In this next step we look at the third line of evidence. We do this with the `vadis_line3()` function. This function also returns a list with, you guessed it, three elements.
+
+- A table `rank.table` of variable importance rankings.
+- A distance matrix based on `rank.table`. For this function distances are measured by calculating the pairwise spearman rank correlation coefficients and subtracting from 1. The intercept is excluded when calculating the distances.
+- A table `similarity.coefs` of similarity coeficients measured for each variety.
+
+We then loop over the list of random forests and calculate the variable importance rankings. For `party` forests we use the `varimpAUC()` function, while `ranger` forests use the "permutation" method. With `party` forests we can also specify whether the rankings should be based on conditional importance scores, which are advised when there are many potentially correlated predictors [@Strobl2008]. Since conditional importance takes *much* longer to compute, we'll set it to `FALSE` (the default) here.
+
+```{r}
+varimp_line <- vadis_line3(crf_list, path = FALSE, conditional = FALSE)
+```
+
+```{r}
+varimp_line$distance.matrix %>% 
+  round(3)
+```
+
+```{r}
+varimp_line$similarity.coefs
+```
+
+# Visualization
+
+We now have our similarity coefficients and distance matrices, which we can visualize in a number of ways.
+
+
+## Clustering
+
+One way we can visualize distances is through clustering methods. There are many different functions and packages
+
+```{r hclustplot, fig.height=6, fig.width=7}
+line2_clust <- hclust(coef_line$distance.matrix, method = "ward.D2")
+plot(line2_clust)
+```
+
+Other methods use divisive clustering (with `cluster::diana()`) or unrooted trees with neighbor joining methods (with `ape::nj()`).
+
+```{r fig.height=6, fig.width=7}
+cluster::diana(coef_line$distance.matrix) %>% 
+  cluster::pltree()
+```
+
+```{r fig.height=6, fig.width=7}
+ape::nj(coef_line$distance.matrix) %>% 
+  plot(type = "u")
+```
+
+
+
+
+## Multidimensional scaling
+
+Distance matrices can also be fed into a multidimensional scaling analysis.
+
+
+```{r}
+line2_mds <- cmdscale(coef_line$distance.matrix, k = 3, eig = T) 
+```
+
+
+```{r mdsplot, fig.height=6, fig.width=7}
+line2_mds[[1]] %>%
+  as.data.frame() %>% 
+  mutate(genres = rownames(.)) %>% 
+  ggplot(aes(V1, V2, label = genres)) +
+  geom_point() +
+  geom_text(nudge_y = .05, size = 4)
+```
+
+One nice thing about MDS maps is that they can be represented in 2 or 3 dimensions. There are a number of methods for generating 3D plots. The simplest is probably `scatterplot3d`.
+
+```{r fig.height=6, fig.width=7}
+dd <- line2_mds[[1]] %>%
+  as.data.frame() 
+library(scatterplot3d)
+with(dd, {
+  scttr <- scatterplot3d(x = V1, y = V2, z = V3, type = "h", pch = 18)
+  scttr_coords <- scttr$xyz.convert(V1, V2, V3)
+  text(scttr_coords$x, scttr_coords$y, labels = rownames(dd), pos = 3)
+  })
+```
+
+`plotly` is another powerful package for generating all kinds of interactive graphics. 
+
+
+```{r fig.height=6, fig.width=7}
+library(plotly)
+dd %>% 
+  mutate(Variety = rownames(.)) %>% 
+  plot_ly() %>%
+  add_trace(x = ~V1, y = ~V2, z = ~V3,
+            type = "scatter3d", inherit = F,
+            marker = list(size = 4),
+            mode = "markers") %>%
+  add_text(x = ~V1, y = ~V2, z = ~V3,
+           text = ~ Variety,
+           type = "scatter3d",
+           mode = "markers",
+           showlegend = FALSE)
+```
+
+
+
+## NeighborNets
+
+NeighborNet is yet another technique for constructing and visualizing phylogenetic relationships. The method is similar to other agglomerative clustering methods, e.g. neighbor-joining algorithms, but allows for "conflicting" signals. These conflicting signals are realized as web-like reticulations which indicate that the data support several possible tree structures [see @Dunn2008].  
+
+```{r NNetplot, fig.height=6, fig.width=7}
+line2_NNet <- phangorn::neighborNet(coef_line$distance.matrix)
+plot(line2_NNet, "2D")
+```
+
+
+## References
+
+
