@@ -29,10 +29,12 @@ vadis_line1 <- function(mod_list, path = NULL){
   dist_mat <- dist(t(raw_tab[-1,]))^2 # omit intercept
   output_list[[2]] <- dist_mat
 
-  dist_mat2 <- (nrow(raw_tab) - dist_mat)/nrow(raw_tab)
+  dist_mat2 <- (nrow(raw_tab[-1,]) - dist_mat)/nrow(raw_tab[-1,])
   sim_tab <- dist_mat2 %>%
+    as.matrix() %>%
+    as.data.frame() %>%
     reshape2::melt() %>%
-    group_by(Var1) %>%
+    group_by(variable) %>%
     dplyr::filter(value < 1) %>%
     summarise(Similarity = mean(value, na.rm = T)) %>%
     arrange(desc(Similarity))
