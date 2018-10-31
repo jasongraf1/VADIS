@@ -26,7 +26,7 @@ vadis_line1 <- function(mod_list, path = NULL){
   raw_tab <- create_signif_table(mod_list)
   output_list[[1]] <- raw_tab
 
-  dist_mat <- e1071::hamming.distance(t(raw_tab[-1,])) # omit intercept
+  dist_mat <- dist(t(raw_tab[-1,]))^2 # omit intercept
   output_list[[2]] <- dist_mat
 
   dist_mat2 <- (nrow(raw_tab) - dist_mat)/nrow(raw_tab)

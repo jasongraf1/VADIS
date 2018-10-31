@@ -18,8 +18,7 @@ Imports:
   phangorn(>= 2.4),
   ade4 (>= 1.7),
   rstan (>= 2.17),
-  brms (>= 2.4),
-  e1071 (>= 1.7)
+  brms (>= 2.4)
 Suggests:
   tidyverse (>= 1.2.1),
   broom (>= 0.5),
