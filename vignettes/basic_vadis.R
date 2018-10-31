@@ -8,7 +8,7 @@ knitr::opts_knit$set(root.dir = normalizePath('../')) # set working directory as
 
 ## ----libs, comment=F, message=FALSE, error=FALSE-------------------------
 library(tidyverse) # for data wrangling
-library(lme4) # for regression models
+library(lme4); library(arm) # for regression models
 library(party) # for random forests
 library(phangorn) # for neighborNets
 
@@ -38,25 +38,29 @@ f1 <- Response ~ DirObjWordLength + DirObjDefiniteness + DirObjGivenness + DirOb
   DirectionalPP + PrimeType + Semantics + Surprisal.P + Surprisal.V + Register
 
 ## ------------------------------------------------------------------------
-reg_func <- function(d) {
-  glm(f1, d, family = binomial)
+glm_list <- vector("list")
+for (i in seq_along(data_list)){
+  d <- data_list[[i]]
+  # now we'll standardize the model inputs (excluding the response) before fitting 
+  d[all.vars(f1)[-1]] <- lapply(d[all.vars(f1)[-1]], FUN = stand)  
+  glm_list[[i]] <- glm(f1, data = d, family = binomial)
 }
-
-## ------------------------------------------------------------------------
-glm_list <- lapply(data_list, FUN = reg_func)
+names(glm_list) <- names(data_list)
 
 ## ----eval = F------------------------------------------------------------
 #  # update formula with by-verb and by-particle random intercepts
-#  f2 <- update(f1, .~ . + (1|Verb) + (1|Particle))
+#  f2 <- update(f1, .~ (1|Verb) + (1|Particle) + .)
 #  
-#  # set optimizer controls to help convergence
-#  reg_func2 <- function(d) {
-#    glmer(f1, d, family = binomial,
+#  glmer_list <- vector("list")
+#  for (i in seq_along(data_list)){
+#    d <- data_list[[i]]
+#    # standardize the model inputs (excluding the response and random effects) before fitting
+#    d[all.vars(f2)[-c(1:3)]] <- lapply(d[all.vars(f2)[-c(1:3)]], FUN = stand)
+#    # set optimizer controls to help convergence
+#    glmer_list[[i]] <- glmer(f2, data = d, family = binomial,
 #      control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 1e7)))
 #  }
-#  
-#  # loop through the datasets and fit the model
-#  glmer_list <- lapply(data_list, FUN = reg_func2)
+#  names(glmer_list) <- names(data_list)
 
 ## ------------------------------------------------------------------------
 signif_line <- vadis_line1(glm_list, path = FALSE)

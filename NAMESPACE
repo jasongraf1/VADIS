@@ -3,6 +3,7 @@
 export(create_coef_table)
 export(create_rank_table)
 export(create_signif_table)
+export(stand)
 export(vadis_line1)
 export(vadis_line2)
 export(vadis_line3)
