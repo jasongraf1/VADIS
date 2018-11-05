@@ -26,9 +26,9 @@ vadis_line2 <- function(mod_list, path = NULL){
   output_list[[1]] <- raw_tab
 
   raw_tab$Null.mod <- 0 # add hypothetical variety with all values = 0
-  dist_mat <- dist(t(raw_tab[-1, -ncol(raw_tab)]), method = "euclidean")^2
+  dist_mat <- dist(t(raw_tab[-1, -ncol(raw_tab)]), method = "euclidean")
   # create distance matrix including the "null" model
-  dist_mat_null <- dist(t(raw_tab[-1,]), method = "euclidean")^2
+  dist_mat_null <- dist(t(raw_tab[-1,]), method = "euclidean")
   output_list[[2]] <- as.dist(dist_mat)
 
   # get the average distance of all varieties to the NUll model
@@ -42,7 +42,7 @@ vadis_line2 <- function(mod_list, path = NULL){
     summarise(mean = mean(value))
 
   null_dist <- sim_tab_null[sim_tab_null$variable == "Null.mod", "mean"] %>%
-  as.numeric()
+    as.numeric()
 
   # Now scale all distances to the null average
   sim_tab <- dist_mat^2 %>%
