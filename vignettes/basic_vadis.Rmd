@@ -28,7 +28,7 @@ The basic libraries you'll need for this vignette.
 
 ```{r libs, comment=F, message=FALSE, error=FALSE}
 library(tidyverse) # for data wrangling
-library(lme4); library(arm) # for regression models
+library(lme4) # for regression models
 library(party) # for random forests
 library(phangorn) # for neighborNets
 ```
@@ -101,8 +101,8 @@ In the first step we identify the most important constraints on variation. We kn
 These are the predictors we'll include in our variable grammar models. We'll define our model formula using this set.
 
 ```{r}
-f1 <- Response ~ DirObjWordLength + DirObjDefiniteness + DirObjGivenness + DirObjConcreteness + DirObjThematicity +
-  DirectionalPP + PrimeType + Semantics + Surprisal.P + Surprisal.V + Register
+f1 <- Response ~ DirObjWordLength + DirObjDefiniteness + DirObjGivenness + DirObjConcreteness + 
+  DirObjThematicity + DirectionalPP + PrimeType + Semantics + Surprisal.P + Surprisal.V + Register
 ```
 
 ## Step 2
@@ -111,7 +111,7 @@ We now fit logistic regression models to the data (sub)sets. We'll use fixed-eff
 
 First we'll define our modeling function so that we can quickly apply the function to each of the datasets in `data_list`.  
 
-Next we simply loop over the datasets in `data_list` and fit the model. We'll use the `stand()` function to center and rescale our model inputs [see @Gelman2008]. 
+Next we simply loop over the datasets in `data_list` and fit the model. We'll use the `stand()` function to center and rescale our model inputs [see @Gelman2008]. **Note:** Standardizing inputs in this way is essential for reliable calculation of the similarity coefficients in line 2 (Step 4).
 
 ```{r}
 glm_list <- vector("list")
@@ -179,8 +179,8 @@ signif_line$similarity.coefs
 In the next step we look at the second line of evidence. We do this with the `vadis_line2()` function. This function also returns a list with three elements.
 
 - A table `coef.table` of predictor coefficients, including the intercept.
-- A distance matrix based on `coef.table`. For this function distances are [Euclidean distances](https://en.wikipedia.org/wiki/Euclidean_distance), and the intercept is excluded when calculating the distances.
-- A table `similarity.coefs` of similarity coeficients measured for each variety.
+- A distance matrix based on `coef.table`. For this function distances are squared [Euclidean distances](https://en.wikipedia.org/wiki/Euclidean_distance), and the intercept is excluded when calculating the distances.
+- A table `similarity.coefs` of similarity coeficients measured for each variety. See @SzmrecsanyiInprep for description of how these are calculated.
 
 ```{r}
 coef_line <- vadis_line2(glm_list, path = FALSE)

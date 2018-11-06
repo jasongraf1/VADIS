@@ -8,7 +8,7 @@ knitr::opts_knit$set(root.dir = normalizePath('../')) # set working directory as
 
 ## ----libs, comment=F, message=FALSE, error=FALSE-------------------------
 library(tidyverse) # for data wrangling
-library(lme4); library(arm) # for regression models
+library(lme4) # for regression models
 library(party) # for random forests
 library(phangorn) # for neighborNets
 
@@ -34,8 +34,8 @@ data_list <- split(pv, pv$Variety, drop = TRUE) # drop unused levels
 names(data_list)
 
 ## ------------------------------------------------------------------------
-f1 <- Response ~ DirObjWordLength + DirObjDefiniteness + DirObjGivenness + DirObjConcreteness + DirObjThematicity +
-  DirectionalPP + PrimeType + Semantics + Surprisal.P + Surprisal.V + Register
+f1 <- Response ~ DirObjWordLength + DirObjDefiniteness + DirObjGivenness + DirObjConcreteness + 
+  DirObjThematicity + DirectionalPP + PrimeType + Semantics + Surprisal.P + Surprisal.V + Register
 
 ## ------------------------------------------------------------------------
 glm_list <- vector("list")
