@@ -33,7 +33,7 @@ vadis_line1 <- function(mod_list, path = NULL){
   sim_tab <- dist_mat2 %>%
     as.matrix() %>%
     as.data.frame() %>%
-    reshape2::melt() %>%
+    reshape2::melt(id.vars = NULL) %>%
     group_by(variable) %>%
     dplyr::filter(value < 1) %>%
     summarise(Similarity = mean(value, na.rm = T)) %>%

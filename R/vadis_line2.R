@@ -37,7 +37,7 @@ vadis_line2 <- function(mod_list, path = NULL){
   sim_tab <- dist_mat %>%
     as.matrix() %>%
     as.data.frame() %>%
-    reshape2::melt() %>%
+    reshape2::melt(id.vars = NULL) %>%
     mutate(weighted = value/maxD) %>% # weight distances by maxD
     group_by(variable) %>%
     dplyr::filter(value > 0) %>%      # ignore distances to self
