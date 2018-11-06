@@ -26,6 +26,7 @@ vadis_line2 <- function(mod_list, path = NULL){
   output_list[[1]] <- raw_tab
 
   dist_mat <- dist(t(raw_tab[-1,]), method = "euclidean") # leave out the intercept
+  output_list[[2]] <- dist_mat
 
   # get the maximum reasonable distance
   dmy <- data.frame(a = sample(c(1,-1), size = nrow(raw_tab), replace = T))
