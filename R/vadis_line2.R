@@ -25,33 +25,22 @@ vadis_line2 <- function(mod_list, path = NULL){
   raw_tab <- create_coef_table(mod_list) # call function to create varimp rankings
   output_list[[1]] <- raw_tab
 
-  raw_tab$Null.mod <- 0 # add hypothetical variety with all values = 0
-  dist_mat <- dist(t(raw_tab[-1, -ncol(raw_tab)]), method = "euclidean")
-  # create distance matrix including the "null" model
-  dist_mat_null <- dist(t(raw_tab[-1,]), method = "euclidean")
-  output_list[[2]] <- as.dist(dist_mat)
+  dist_mat <- dist(t(raw_tab[-1,]), method = "euclidean") # leave out the intercept
 
-  # get the average distance of all varieties to the NUll model
-  # square the distances (why?)
-  sim_tab_null <- dist_mat_null^2 %>%
+  # get the maximum reasonable distance
+  dmy <- data.frame(a = sample(c(1,-1), size = nrow(raw_tab), replace = T))
+  dmy$b <- -dmy$a # exact opposite of a
+  maxD <- max(dist(t(dmy), "euclidean"))
+
+  # Now normalize all distances to the maximum reasonable distance
+  sim_tab <- dist_mat %>%
     as.matrix() %>%
     as.data.frame() %>%
     reshape2::melt() %>%
+    mutate(weighted = value/maxD) %>% # weight distances by maxD
     group_by(variable) %>%
-    dplyr::filter(value > 0) %>% # ignore distances to self
-    summarise(mean = mean(value))
-
-  null_dist <- sim_tab_null[sim_tab_null$variable == "Null.mod", "mean"] %>%
-    as.numeric()
-
-  # Now scale all distances to the null average
-  sim_tab <- dist_mat^2 %>%
-    as.matrix() %>%
-    as.data.frame() %>%
-    reshape2::melt() %>%
-    group_by(variable) %>%
-    dplyr::filter(value > 0) %>% # ignore distances to self
-    summarise(Similarity = 1 - mean(value)/null_dist) %>%
+    dplyr::filter(value > 0) %>%      # ignore distances to self
+    summarise(Similarity = 1 - mean(weighted)) %>%
     arrange(desc(Similarity))
 
   output_list[[3]] <- as.data.frame(sim_tab)
