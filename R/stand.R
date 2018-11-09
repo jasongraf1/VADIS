@@ -13,7 +13,7 @@
 #' @export
 #'
 #' @examples
-#' #' \dontrun{
+#' \dontrun{
 #' x <- rnorm(10, 5, 3)
 #' stand(x)
 #'
