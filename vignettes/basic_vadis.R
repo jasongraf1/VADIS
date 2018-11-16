@@ -138,6 +138,7 @@ mean_sims <- data.frame(
   line3 = varimp_line$similarity.coefs[,2]
 )
 mean_sims$mean <- apply(mean_sims, 1, mean)
+rownames(mean_sims) <- names(data_list)
 mean_sims
 
 ## ------------------------------------------------------------------------
@@ -155,7 +156,7 @@ fused_dist %>%
 line2_clust <- hclust(coef_line$distance.matrix, method = "ward.D2")
 plot(line2_clust, main = "Hierarchical clustering of line 2 distances")
 
-## ------------------------------------------------------------------------
+## ----fig.height=6, fig.width=7-------------------------------------------
 hclust(fused_dist, method = "ward.D2") %>% 
   plot(main = "Hierarchical clustering of fused distances")
 
@@ -206,4 +207,8 @@ dd %>%
 ## ----NNetplot, fig.height=6, fig.width=7---------------------------------
 line2_NNet <- phangorn::neighborNet(coef_line$distance.matrix)
 plot(line2_NNet, "2D")
+
+## ----NNetplot2, fig.height=6, fig.width=7--------------------------------
+phangorn::neighborNet(fused_dist) %>% 
+  plot("2D")
 
