@@ -27,7 +27,7 @@ vadis_line1 <- function(mod_list, path = NULL){
   output_list[[1]] <- raw_tab
 
   dist_mat <- dist(t(raw_tab[-1,]))^2 # omit intercept
-  output_list[[2]] <- dist_mat
+  output_list[[2]] <- dist_mat/nrow(raw_tab[-1,]) # normalize by number of constraints
 
   dist_mat2 <- (nrow(raw_tab[-1,]) - dist_mat)/nrow(raw_tab[-1,])
   sim_tab <- dist_mat2 %>%
