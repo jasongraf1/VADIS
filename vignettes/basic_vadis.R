@@ -73,7 +73,8 @@ signif_line <- vadis_line1(glm_list, path = FALSE)
 signif_line$signif.table
 
 ## ------------------------------------------------------------------------
-signif_line$distance.matrix
+signif_line$distance.matrix %>% 
+  round(3)
 
 ## ------------------------------------------------------------------------
 signif_line$similarity.coefs
@@ -128,12 +129,13 @@ varimp_line$similarity.coefs
 d <- data.frame(
   a = rep(c(-1,1), each = 5),
   b = rep(c(1,-1), each = 5))
+d
 
 ## ------------------------------------------------------------------------
 mean_sims <- data.frame(
-  line1 = signif_line$similarity.coefs,
-  line2 = coef_line$similarity.coefs,
-  line3 = varimp_line$similarity.coefs
+  line1 = signif_line$similarity.coefs[,2], # get only the values in the 2nd column
+  line2 = coef_line$similarity.coefs[,2],
+  line3 = varimp_line$similarity.coefs[,2]
 )
 mean_sims$mean <- apply(mean_sims, 1, mean)
 mean_sims
@@ -145,19 +147,25 @@ mean(mean_sims$mean)
 fused_dist <- analogue::fuse(signif_line$distance.matrix, 
                              coef_line$distance.matrix, 
                              varimp_line$distance.matrix)
-fused_dist
+fused_dist %>% 
+  round(3)
 
 ## ----hclustplot, fig.height=6, fig.width=7-------------------------------
+# Use the 2nd line of evidence
 line2_clust <- hclust(coef_line$distance.matrix, method = "ward.D2")
-plot(line2_clust)
+plot(line2_clust, main = "Hierarchical clustering of line 2 distances")
+
+## ------------------------------------------------------------------------
+hclust(fused_dist, method = "ward.D2") %>% 
+  plot(main = "Hierarchical clustering of fused distances")
 
 ## ----fig.height=6, fig.width=7-------------------------------------------
 cluster::diana(coef_line$distance.matrix) %>% 
-  cluster::pltree()
+  cluster::pltree(main = "Divisive clustering of line 2 distances")
 
 ## ----fig.height=6, fig.width=7-------------------------------------------
 ape::nj(coef_line$distance.matrix) %>% 
-  plot(type = "u")
+  plot(type = "u", main = "unrooted clustering of line 2 distances")
 
 ## ------------------------------------------------------------------------
 line2_mds <- cmdscale(coef_line$distance.matrix, k = 3, eig = T) 

@@ -184,7 +184,8 @@ signif_line$signif.table
 ```
 
 ```{r}
-signif_line$distance.matrix
+signif_line$distance.matrix %>% 
+  round(3)
 ```
 
 ```{r}
@@ -296,6 +297,7 @@ For a comparison of grammars with *n* constraints, we define the maximum distanc
 d <- data.frame(
   a = rep(c(-1,1), each = 5),
   b = rep(c(1,-1), each = 5))
+d
 ```
 
 The maximum distance in this case is therefore d(A,B) = `r round(as.numeric(dist(t(d), "euclidean")), 2)`. To normalize our distance matrices we divide the observed distances by this value to give distances within a range of 0 to 1. For the similarity coefficients we simply subtract the distances from 1 to give us a score where larger values represent greater average similarity.
@@ -308,9 +310,9 @@ We can merge the similarity scores across the three lines of evidence, and arriv
 
 ```{r}
 mean_sims <- data.frame(
-  line1 = signif_line$similarity.coefs,
-  line2 = coef_line$similarity.coefs,
-  line3 = varimp_line$similarity.coefs
+  line1 = signif_line$similarity.coefs[,2], # get only the values in the 2nd column
+  line2 = coef_line$similarity.coefs[,2],
+  line3 = varimp_line$similarity.coefs[,2]
 )
 mean_sims$mean <- apply(mean_sims, 1, mean)
 mean_sims
@@ -328,7 +330,8 @@ We can also create a combined distance matrix from the three lines of evidence. 
 fused_dist <- analogue::fuse(signif_line$distance.matrix, 
                              coef_line$distance.matrix, 
                              varimp_line$distance.matrix)
-fused_dist
+fused_dist %>% 
+  round(3)
 ```
 
 
@@ -339,26 +342,33 @@ We now have our similarity coefficients and distance matrices, which we can visu
 
 ## Clustering
 
-One way we can visualize distances is through clustering methods. There are many different functions and packages
+One way we can visualize distances is through clustering methods. There are many different functions and packages for doing this. The simplest case is probably the `hclust()` function.
 
 ```{r hclustplot, fig.height=6, fig.width=7}
+# Use the 2nd line of evidence
 line2_clust <- hclust(coef_line$distance.matrix, method = "ward.D2")
-plot(line2_clust)
+plot(line2_clust, main = "Hierarchical clustering of line 2 distances")
 ```
+
+We can look at the fused matrix combining the 3 lines of evidence.
+
+```{r}
+hclust(fused_dist, method = "ward.D2") %>% 
+  plot(main = "Hierarchical clustering of fused distances")
+```
+
 
 Other methods use divisive clustering (with `cluster::diana()`) or unrooted trees with neighbor joining methods (with `ape::nj()`).
 
 ```{r fig.height=6, fig.width=7}
 cluster::diana(coef_line$distance.matrix) %>% 
-  cluster::pltree()
+  cluster::pltree(main = "Divisive clustering of line 2 distances")
 ```
 
 ```{r fig.height=6, fig.width=7}
 ape::nj(coef_line$distance.matrix) %>% 
-  plot(type = "u")
+  plot(type = "u", main = "unrooted clustering of line 2 distances")
 ```
-
-
 
 
 ## Multidimensional scaling
