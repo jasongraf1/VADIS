@@ -24,7 +24,7 @@ library(VADIS)
 pv <- particle_verbs_short
 names(pv)
 
-## ----fig.height = 5, fig.width=6-----------------------------------------
+## ----fig.height = 4, fig.width=6-----------------------------------------
 ggplot(pv, aes(Variety, fill = Response)) +
   geom_bar(position = "dodge")
 
@@ -43,9 +43,9 @@ for (i in seq_along(data_list)){
   d <- data_list[[i]]
   # now we'll standardize the model inputs (excluding the response) before fitting 
   d[all.vars(f1)[-1]] <- lapply(d[all.vars(f1)[-1]], FUN = stand)  
-  glm_list[[i]] <- glm(f1, data = d, family = binomial)
+  glm_list[[i]] <- glm(f1, data = d, family = binomial, x = TRUE) # note the x = TRUE
 }
-names(glm_list) <- names(data_list)
+names(glm_list) <- names(data_list) # add names to the list of models
 
 ## ----eval = F------------------------------------------------------------
 #  # update formula with by-verb and by-particle random intercepts
@@ -63,6 +63,10 @@ names(glm_list) <- names(data_list)
 #  names(glmer_list) <- names(data_list)
 
 ## ------------------------------------------------------------------------
+summary_stats(glm_list) %>% 
+  round(3)
+
+## ------------------------------------------------------------------------
 signif_line <- vadis_line1(glm_list, path = FALSE)
 
 ## ------------------------------------------------------------------------
@@ -73,6 +77,16 @@ signif_line$distance.matrix
 
 ## ------------------------------------------------------------------------
 signif_line$similarity.coefs
+
+## ----eval = F------------------------------------------------------------
+#  write.csv(signif_line$signif.table,
+#            file = "line1_significance_table.csv")
+#  
+#  write.csv(as.matrix(signif_line$distance.matrix),
+#            file = "line1_distance_matrix.csv")
+#  
+#  write.csv(signif_line$similarity.coefs,
+#            file = "line1_similarity_coefs.csv")
 
 ## ------------------------------------------------------------------------
 coef_line <- vadis_line2(glm_list, path = FALSE)
@@ -97,6 +111,10 @@ crf_func <- function(d) {
 crf_list <- lapply(data_list, FUN = crf_func)
 
 ## ------------------------------------------------------------------------
+summary_stats(crf_list, data_list, response = "Response") %>% 
+  round(3)
+
+## ------------------------------------------------------------------------
 varimp_line <- vadis_line3(crf_list, path = FALSE, conditional = FALSE)
 
 ## ------------------------------------------------------------------------
@@ -105,6 +123,29 @@ varimp_line$distance.matrix %>%
 
 ## ------------------------------------------------------------------------
 varimp_line$similarity.coefs
+
+## ----echo=F--------------------------------------------------------------
+d <- data.frame(
+  a = rep(c(-1,1), each = 5),
+  b = rep(c(1,-1), each = 5))
+
+## ------------------------------------------------------------------------
+mean_sims <- data.frame(
+  line1 = signif_line$similarity.coefs,
+  line2 = coef_line$similarity.coefs,
+  line3 = varimp_line$similarity.coefs
+)
+mean_sims$mean <- apply(mean_sims, 1, mean)
+mean_sims
+
+## ------------------------------------------------------------------------
+mean(mean_sims$mean)
+
+## ------------------------------------------------------------------------
+fused_dist <- analogue::fuse(signif_line$distance.matrix, 
+                             coef_line$distance.matrix, 
+                             varimp_line$distance.matrix)
+fused_dist
 
 ## ----hclustplot, fig.height=6, fig.width=7-------------------------------
 line2_clust <- hclust(coef_line$distance.matrix, method = "ward.D2")
