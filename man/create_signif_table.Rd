@@ -18,16 +18,15 @@ A dataframe
 Create Table of Significant Effects for VADIS analysis
 }
 \details{
-The function loops through a list of model objects, extracts the coefficient estimates, and compiles them in a single dataframe.
+The function loops through a list of model objects, extracts the significance values of the parameter estimates, and compiles them in a single dataframe.
 }
 \examples{
 \dontrun{
 lm_fnc <- function(x) lm(Sepal.Length ~ Petal.Length + Petal.Width, data = x)
-rm_list <- fit.vadis.RM(iris, split.by = "Species", fit.func = lm_fnc,
-  path = FALSE)
-summary(rm_list[[1]])
+data_list <- split(iris, list(iris$Species), drop = T)
+rm_list <- lapply(data_list, FUN = function(x) glm(Petal.Length ~ ., x))
 
-create_coef_table(rm_list, path = FALSE)
+create_coef_table(rm_list)
 }
 }
 \author{
