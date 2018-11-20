@@ -36,8 +36,7 @@ vadis_line1 <- function(mod_list, path = NULL){
     reshape2::melt(id.vars = NULL) %>%
     group_by(variable) %>%
     dplyr::filter(value < 1) %>%
-    summarise(Similarity = mean(value, na.rm = T)) %>%
-    arrange(desc(Similarity))
+    summarise(Similarity = mean(value, na.rm = T))
 
   output_list[[3]] <- as.data.frame(sim_tab)
 

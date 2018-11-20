@@ -19,7 +19,7 @@ calc_mod_stats <- function(mod, df = NULL, response = NULL){
     # Dxy <- 2 * (c.index - .05)
     maxVIF <- max(calc_VIF(mod))
     kappa <- calc_kappa(mod)
-    overdisp <- calc_overdispersion(mod)$p
+    hoslem <- hosmerlem_test(mod)$p.value
     # put the output into a vector
     output <- c(
       N = as.integer(n),
@@ -29,7 +29,7 @@ calc_mod_stats <- function(mod, df = NULL, response = NULL){
       AIC = aic,
       Max.VIF = maxVIF,
       kappa = kappa,
-      overdisp.p = round(overdisp, 3))
+      hoslem.p = round(hoslem, 3))
   } else if (mclass %in% c("ranger", "RandomForest", "randomForest")){
     if (is.null(response)) {
       stop("You must enter a column name for the response variable")

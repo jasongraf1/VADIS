@@ -26,7 +26,7 @@ summary_stats <- function(mlist, dlist = NULL, response = NULL){
   if (class(mlist[[1]])[1] %in% c("glm", "merMod")){
     out_df <- data.frame(matrix(nrow = length(mlist), ncol = 8)) # regression
     names(out_df) <- c("N", "baseline", "predicted.corr", "C", "AIC", "Max.VIF",
-      "kappa", "overdisp.p")
+      "kappa", "HosLem.p")
   } else {
     out_df <- data.frame(matrix(nrow = length(mlist), ncol = 4)) # random forests
     names(out_df) <- c("N", "baseline", "predicted.corr", "C")

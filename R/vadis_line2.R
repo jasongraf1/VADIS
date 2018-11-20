@@ -43,8 +43,7 @@ vadis_line2 <- function(mod_list, path = NULL){
     mutate(weighted = value/maxD) %>% # weight distances by maxD
     group_by(variable) %>%
     dplyr::filter(value > 0) %>%      # ignore distances to self
-    summarise(Similarity = 1 - mean(weighted)) %>%
-    arrange(desc(Similarity))
+    summarise(Similarity = 1 - mean(weighted))
 
   output_list[[3]] <- as.data.frame(sim_tab)
 
