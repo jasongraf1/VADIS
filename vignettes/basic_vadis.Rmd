@@ -6,6 +6,7 @@ output:
   rmarkdown::html_vignette:
     df_print: kable
     fig_caption: yes
+    css: pandoc.css
 vignette: >
   %\VignetteIndexEntry{Basic application of VADIS method}
   %\VignetteEngine{knitr::rmarkdown}
@@ -17,12 +18,16 @@ bibliography: vadis_refs.bib
 library(knitr)
 knitr::opts_chunk$set(
   collapse = TRUE,
+  error = FALSE,
+  message = FALSE,
   comment = "#>"
 )
-knitr::opts_knit$set(root.dir = normalizePath('../')) # set working directory as root
+knitr::opts_knit$set(
+  root.dir = normalizePath('../'), # set working directory as root
+  cache.path = "vignettes/basic_vadis_cache/") 
 ```
 
-This vignette introduces the basics of the Variation-Based Distance & Similarity Modeling (**VADIS**) method and demonstrates how to use the functions in the `PACKAGE` (Name suggestions?). The VADIS method builds upon techniques in comparative sociolinguistics and quantitative dialectometry for quantifying the similarity between varieties and dialects as captured by correspondences among the ways in which language users choose between different ways of saying the same thing. For details of the method and theoretical motivation see @SzmrecsanyiInprep and @GrafmillerToappear. 
+This vignette introduces the basics of the Variation-Based Distance & Similarity Modeling (**VADIS**) method and demonstrates how to use the core functions in the `VADIS` package. The VADIS method builds upon techniques in comparative sociolinguistics and quantitative dialectometry for quantifying the similarity between varieties and dialects as captured by correspondences among the ways in which language users choose between different ways of saying the same thing. For details of the method and theoretical motivation see @SzmrecsanyiInprep and @GrafmillerToappear. 
 
 The basic libraries you'll need for this vignette.
 
@@ -33,7 +38,7 @@ library(party) # for random forests
 library(phangorn) # for neighborNets
 ```
 
-Install and load the `PACKAGE`.
+Install and load the `VADIS` package.
 
 ```{r eval = F}
 devtools::install_github("jasongraf1/VADIS")
@@ -59,7 +64,7 @@ pv <- particle_verbs_short
 names(pv)
 ```
 
-This dataset contains approximately 1000 tokens from nine different varities of English from around the world. 
+This dataset contains approximately 11000 tokens from nine different varities of English from around the world. 
 
 ```{r fig.height = 4, fig.width=6}
 ggplot(pv, aes(Variety, fill = Response)) +
@@ -78,7 +83,13 @@ The method takes inspiration from comparative sociolinguistics [see e.g. @Taglia
 2. Do the constraints have the same strength across varieties? 
 3. Is the constraint hierarchy similar?
 
-Below we'll go through the steps for calculating and assessing each of these lines of evidence. But first, we need to get the data into the necessary format. With VADIS we model particle placement across these nine varieties separately, so we first split the data up into nine individual datasets.
+Below we'll go through the steps for calculating and assessing each of these lines of evidence. 
+
+#### Splitting the dataset
+
+The first thing we need to do is to get the data into the necessary format. With VADIS we analyze variables across different datasest separately, and so the basic data object that the `VADIS` functions work with is a **list of dataframes**.
+
+For this tutorial, we're modeling particle placement across nine varieties separately, so we first split the data up into nine individual datasets stored together as a list.
 
 ```{r}
 # create list of dataframes
@@ -90,9 +101,9 @@ Now we're ready to begin.
 
 ## Step 1
 
-In the first step we identify the most important constraints on variation. We know from prior research that many different factors influence the choice of particle placement, including:
+In the first step we identify the most important constraints on our variable. We know from prior research that many different factors influence the choice of particle placement, including:
 
-- Length, definiteness, concreteness, and discourse accessibility of the direct object (*note personal pronoun direct objects are excluded from this dataset*)
+- Length, definiteness, concreteness, and discourse accessibility of the direct object (Note: personal pronoun direct objects are excluded from this dataset)
 - The semantic idiomaticity of the verb-particle
 - The presence of a directional PP following the verb phrase 
 - predictability of the particle given the verb, and the predictability of the verb given the particle
@@ -108,9 +119,13 @@ f1 <- Response ~ DirObjWordLength + DirObjDefiniteness + DirObjGivenness + DirOb
 
 ## Step 2
 
-We now fit logistic regression models to the data (sub)sets. We'll use fixed-effects only models for this vignette since they are faster to compute, but I'll give an example of the code for a mixed-effects model below.
+We now fit logistic regression models to the data (sub)sets. We'll use fixed-effects only models for this vignette since they are faster to compute, but I give an example of the code for a mixed-effects model below.
 
-Next we simply loop over the datasets in `data_list` and fit a model to each one. Before fitting we'll center and rescale our model inputs [see @Gelman2008] with the `stand()` function. **Note:** Standardizing inputs in this way is essential for reliable calculation of the similarity coefficients in line 2 (Step 4). See `?stand` for details.
+Next we simply loop over the datasets in `data_list` and fit a model to each one. Before fitting we'll center and rescale our model inputs [see @Gelman2008] with the `stand()` function. 
+
+**Note:** Standardizing inputs in this way is essential for reliable calculation of the similarity coefficients in line 2 (Step 4). See `?stand` for details.
+
+
 
 ```{r}
 glm_list <- vector("list")
@@ -123,12 +138,18 @@ for (i in seq_along(data_list)){
 names(glm_list) <- names(data_list) # add names to the list of models
 ```
 
-Mixed-effects models would be run in much the same fashion. We just have to define a new formula and different modeling function. Since mixed-models take a bit longer to run, we'll only use fixed-effects models here.
+Notice the inclusion of the `x = TRUE` argument in the `glm()` function. This tells it to store the data matrix in the model object, and this is necessary for the VADIS functions to work with `glm` models. This is not necessary for models fit with `glmer`.
 
-```{r eval = F}
+
+Mixed-effects models are run in much the same fashion. We just have to define a new formula and different modeling function. Again, we won't use these models in this vignette, since mixed-models can take much longer to compute.
+
+```{r}
 # update formula with by-verb and by-particle random intercepts 
 f2 <- update(f1, .~ (1|Verb) + (1|Particle) + .)
+f2
+```
 
+```{r eval = F}
 glmer_list <- vector("list")
 for (i in seq_along(data_list)){
   d <- data_list[[i]]
@@ -143,22 +164,25 @@ names(glmer_list) <- names(data_list)
 
 ### Checking fits
 
-Before moving on, we should check that the models fit the data well, and that we don't have any issues with collinearity or other signs of trouble. The `summary_stats()` function gives a number of statistics.
+Before moving on, we should check that the models fit the data well, and that we don't have any issues with collinearity or other signs of trouble. The `summary_stats()` function gives a number of statistics to consider.
 
 ```{r}
 summary_stats(glm_list) %>% 
   round(3)
 ```
 
+These are:
+
 - `N`: the total number of observations
 - `baseline`: the baseline accuracy, i.e. the proportion of the most frequent response
 - `predicted.corr`: the proportion of observations predicted correctly
-- `C`: the concordance index *C*. Values below .8 suggest poor model fit
+- `C`: the concordance index *C*, a.k.a. as the area under the receiver operating characteristic (ROC) curve. Values below .8 suggest poor model discrimination
 - `AIC`: the model's Akaike Information Criterion
 - `Max.VIF`: the maximum variance inflation factor for the model's parameter estimates. Values above 10 suggest potentially troublesome collinearity among predictors
 - `kappa`: the condition number indicating overall data multicollinearity. Values < 6 indicate no collinearity; ~15 indicate medium collinearity; > 30 indicate a worrysome degree of collinearity
-- `overdisp.p`: the p-value of a test for overdispersion (greater variability in the response than expected for a binomial model). Low values (*p* < .05) indicate potential problems.
+- `HosLem.p`: the p-value of the Hosmer-Lemeshow test for goodness of fit [@Hosmer1980]. This is a popular though controversial goodness of fit test for logistic regression [see @Harrell2015b, 236-237]. Low values (*p* < .05) indicate potential problems.
 
+All the models appear to discriminate between the two responses fairly well, though some of our models may have some issues with model fit. We'll set this aside for the time being.
 
 
 ## Step 3 
@@ -229,7 +253,8 @@ coef_line$distance.matrix %>%
 ```
 
 ```{r}
-coef_line$similarity.coefs
+coef_line$similarity.coefs %>% 
+  arrange(desc(Similarity))
 ```
 
 
@@ -247,7 +272,7 @@ crf_func <- function(d) {
 
 Now we loop over the datasets in `data_list` and apply the modelling function just like above.
 
-```{r}
+```{r crf_list, cache = T}
 crf_list <- lapply(data_list, FUN = crf_func)
 ```
 
@@ -273,7 +298,7 @@ In this next step we look at the third line of evidence. We do this with the `va
 
 We then loop over the list of random forests and calculate the variable importance rankings. For `party` forests we use the `varimpAUC()` function, while `ranger` forests use the "permutation" method. With `party` forests we can also specify whether the rankings should be based on conditional importance scores, which are advised when there are many potentially correlated predictors [@Strobl2008]. Since conditional importance takes *much* longer to compute, we'll set it to `FALSE` (the default) here.
 
-```{r}
+```{r line3, cache=TRUE}
 varimp_line <- vadis_line3(crf_list, path = FALSE, conditional = FALSE)
 ```
 
@@ -293,7 +318,7 @@ In order to appropriately calculate line 2, we need to determine a maximum dista
 
 For a comparison of grammars with *n* constraints, we define the maximum distance by taking the distance between two hypothetical varieties whose constraints all have an absolute effect size of ±1 but whose effect directions are the opposite of one another in the respective varities. For example, in a study comparing grammars with 10 constraints, we calculate the maximum reasonable distance by taking the euclidean distance between hypothetical varieties A and B that look like so.
 
-```{r echo=F}
+```{r echo=F, eval = T}
 d <- data.frame(
   a = rep(c(-1,1), each = 5),
   b = rep(c(1,-1), each = 5))
@@ -316,7 +341,7 @@ mean_sims <- data.frame(
 )
 mean_sims$mean <- apply(mean_sims, 1, mean)
 rownames(mean_sims) <- names(data_list)
-mean_sims
+round(mean_sims, 3)
 ```
 
 From this we can calculate a mean of the mean similarity coefficients.
@@ -331,8 +356,7 @@ We can also create a combined distance matrix from the three lines of evidence. 
 fused_dist <- analogue::fuse(signif_line$distance.matrix, 
                              coef_line$distance.matrix, 
                              varimp_line$distance.matrix)
-fused_dist %>% 
-  round(3)
+round(fused_dist, 3)
 ```
 
 

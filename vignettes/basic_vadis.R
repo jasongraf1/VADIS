@@ -2,9 +2,13 @@
 library(knitr)
 knitr::opts_chunk$set(
   collapse = TRUE,
+  error = FALSE,
+  message = FALSE,
   comment = "#>"
 )
-knitr::opts_knit$set(root.dir = normalizePath('../')) # set working directory as root
+knitr::opts_knit$set(
+  root.dir = normalizePath('../'), # set working directory as root
+  cache.path = "vignettes/basic_vadis_cache/") 
 
 ## ----libs, comment=F, message=FALSE, error=FALSE-------------------------
 library(tidyverse) # for data wrangling
@@ -47,10 +51,12 @@ for (i in seq_along(data_list)){
 }
 names(glm_list) <- names(data_list) # add names to the list of models
 
+## ------------------------------------------------------------------------
+# update formula with by-verb and by-particle random intercepts 
+f2 <- update(f1, .~ (1|Verb) + (1|Particle) + .)
+f2
+
 ## ----eval = F------------------------------------------------------------
-#  # update formula with by-verb and by-particle random intercepts
-#  f2 <- update(f1, .~ (1|Verb) + (1|Particle) + .)
-#  
 #  glmer_list <- vector("list")
 #  for (i in seq_along(data_list)){
 #    d <- data_list[[i]]
@@ -101,21 +107,22 @@ coef_line$distance.matrix %>%
   round(3)
 
 ## ------------------------------------------------------------------------
-coef_line$similarity.coefs
+coef_line$similarity.coefs %>% 
+  arrange(desc(Similarity))
 
 ## ------------------------------------------------------------------------
 crf_func <- function(d) {
   cforest(f1, d, controls = cforest_unbiased(ntree = 500, mtry = 3))
 }
 
-## ------------------------------------------------------------------------
+## ----crf_list, cache = T-------------------------------------------------
 crf_list <- lapply(data_list, FUN = crf_func)
 
 ## ------------------------------------------------------------------------
 summary_stats(crf_list, data_list, response = "Response") %>% 
   round(3)
 
-## ------------------------------------------------------------------------
+## ----line3, cache=TRUE---------------------------------------------------
 varimp_line <- vadis_line3(crf_list, path = FALSE, conditional = FALSE)
 
 ## ------------------------------------------------------------------------
@@ -125,7 +132,7 @@ varimp_line$distance.matrix %>%
 ## ------------------------------------------------------------------------
 varimp_line$similarity.coefs
 
-## ----echo=F--------------------------------------------------------------
+## ----echo=F, eval = T----------------------------------------------------
 d <- data.frame(
   a = rep(c(-1,1), each = 5),
   b = rep(c(1,-1), each = 5))
@@ -139,7 +146,7 @@ mean_sims <- data.frame(
 )
 mean_sims$mean <- apply(mean_sims, 1, mean)
 rownames(mean_sims) <- names(data_list)
-mean_sims
+round(mean_sims, 3)
 
 ## ------------------------------------------------------------------------
 mean(mean_sims$mean)
@@ -148,8 +155,7 @@ mean(mean_sims$mean)
 fused_dist <- analogue::fuse(signif_line$distance.matrix, 
                              coef_line$distance.matrix, 
                              varimp_line$distance.matrix)
-fused_dist %>% 
-  round(3)
+round(fused_dist, 3)
 
 ## ----hclustplot, fig.height=6, fig.width=7-------------------------------
 # Use the 2nd line of evidence
