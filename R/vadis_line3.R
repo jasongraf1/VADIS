@@ -38,7 +38,7 @@ vadis_line3 <- function(mod_list, path = NULL, conditional = FALSE){
 
   output_list[[3]] <- as.data.frame(sim_tab)
 
-  names(output_list) <- c("rank.table", "distance.matrix", "similarity.coefs")
+  names(output_list) <- c("rank.table", "distance.matrix", "similarity.scores")
 
   if (path == FALSE) {
     return (output_list)
