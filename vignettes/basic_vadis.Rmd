@@ -113,8 +113,9 @@ In the first step we identify the most important constraints on our variable. We
 These are the predictors we'll include in our variable grammar models. We'll define our model formula using this set.
 
 ```{r}
-f1 <- Response ~ DirObjWordLength + DirObjDefiniteness + DirObjGivenness + DirObjConcreteness + 
-  DirObjThematicity + DirectionalPP + PrimeType + Semantics + Surprisal.P + Surprisal.V + Register
+f1 <- Response ~ DirObjWordLength + DirObjDefiniteness + DirObjGivenness + 
+  DirObjConcreteness + DirObjThematicity + DirectionalPP + PrimeType + 
+  Semantics + Surprisal.P + Surprisal.V + Register
 ```
 
 ## Step 2
@@ -179,7 +180,7 @@ These are:
 - `C`: the concordance index *C*, a.k.a. as the area under the receiver operating characteristic (ROC) curve. Values below .8 suggest poor model discrimination
 - `AIC`: the model's Akaike Information Criterion
 - `Max.VIF`: the maximum variance inflation factor for the model's parameter estimates. Values above 10 suggest potentially troublesome collinearity among predictors
-- `kappa`: the condition number indicating overall data multicollinearity. Values < 6 indicate no collinearity; ~15 indicate medium collinearity; > 30 indicate a worrysome degree of collinearity
+- `kappa`: the condition number indicating overall data multicollinearity. Values < 6 indicate no collinearity; ~15 indicate medium collinearity; > 30 indicate a worrysome degree of collinearity [@Baayen2008, 198-200].
 - `HosLem.p`: the p-value of the Hosmer-Lemeshow test for goodness of fit [@Hosmer1980]. This is a popular though controversial goodness of fit test for logistic regression [see @Harrell2015b, 236-237]. Low values (*p* < .05) indicate potential problems.
 
 All the models appear to discriminate between the two responses fairly well, though some of our models may have some issues with model fit. We'll set this aside for the time being.
@@ -191,9 +192,9 @@ In step 3 we look at the first line of evidence: "Are the same constraints signi
 
 We do this with the `vadis_line1()` function. This function returns a list with three elements.
 
-- A table `signif.table` of predictor significance values, including the intercept. 1 = significant, 0 = nonsignificant
-- A distance matrix based on `signif.table`. For this function distances are [Hamming distances](https://en.wikipedia.org/wiki/Hamming_distance), which in the case of binary data is equivalent to the Manhattan or squared Euclidean distance. The intercept is excluded when calculating the distances. In such cases these distances are equivalent to the number of constraint significance values on which the two varieties disagree. These distances are then normalized by dividing by the total number of constraints, i.e. the maximum number of values on which two varieties could disagree.
-- A table `similarity.coefs` of coefficients measured as the mean similarity for each variety to all the others.
+- `signif.table`: A table of predictor significance values, including the intercept. 1 = significant, 0 = non-significant
+- `distance.matrix`: A distance matrix derived from `signif.table`. For line 1 distances are [Hamming distances](https://en.wikipedia.org/wiki/Hamming_distance), which in the case of binary data is equivalent to the Manhattan or squared Euclidean distance (the intercept is *excluded* when calculating the distances). In such cases these distances are equivalent to the number of constraints onr which the two varieties disagree about their statistical significance. These distances are then normalized by dividing by the total number of constraints, i.e. the maximum number of constraints on which two varieties could disagree.
+- `similarity.scores`: A table of scores measuring the mean similarity for each variety to all the others. See @SzmrecsanyiInprep for description of how these are calculated.
 
 The `path` argument tells the function where to save the output. The default setting saves a file `vadis_line1_output_2018-Oct-30_15.04.rds` to the current working directory. Note that the output of the function is a list object, so it saves it as an R data object file (`.rds`). Setting `path = FALSE` tells it not to save anything. 
 
@@ -213,7 +214,8 @@ signif_line$distance.matrix %>%
 ```
 
 ```{r}
-signif_line$similarity.coefs
+signif_line$similarity.scores %>% 
+  arrange(desc(Similarity)) # sort by similarity
 ```
 
 Individual components can be saved as .csv (or.txt) files like so.
@@ -225,8 +227,8 @@ write.csv(signif_line$signif.table,
 write.csv(as.matrix(signif_line$distance.matrix), 
           file = "line1_distance_matrix.csv")
 
-write.csv(signif_line$similarity.coefs, 
-          file = "line1_similarity_coefs.csv")
+write.csv(signif_line$similarity.scores, 
+          file = "line1_similarity_scores.csv")
 ```
 
 
@@ -234,9 +236,9 @@ write.csv(signif_line$similarity.coefs,
 
 In the next step we look at the second line of evidence. We do this with the `vadis_line2()` function. This function also returns a list with three elements.
 
-- A table `coef.table` of predictor coefficients, including the intercept.
-- A distance matrix based on `coef.table`. For this function distances are [Euclidean distances](https://en.wikipedia.org/wiki/Euclidean_distance), normalized to the maximum distance (see below). The intercept is excluded when calculating the distances.
-- A table `similarity.coefs` of coefficients measured as the mean similarity for each variety to all the others. See @SzmrecsanyiInprep for description of how these are calculated.
+- `coef.table`: A table of predictor coefficients from the regression models, including the intercept.
+- `distance.matrix`: A distance matrix based on `coef.table`. For this function distances are [Euclidean distances](https://en.wikipedia.org/wiki/Euclidean_distance), normalized to a maximum reasonable distance (see below). The intercept is *excluded* when calculating the distances.
+- `similarity.scores`: A table of coefficients measured as the mean similarity for each variety to all the others. See @SzmrecsanyiInprep for description of how these are calculated.
 
 ```{r}
 coef_line <- vadis_line2(glm_list, path = FALSE)
@@ -253,7 +255,7 @@ coef_line$distance.matrix %>%
 ```
 
 ```{r}
-coef_line$similarity.coefs %>% 
+coef_line$similarity.scores %>% 
   arrange(desc(Similarity))
 ```
 
@@ -272,7 +274,7 @@ crf_func <- function(d) {
 
 Now we loop over the datasets in `data_list` and apply the modelling function just like above.
 
-```{r crf_list, cache = T}
+```{r crf_list, cache = F}
 crf_list <- lapply(data_list, FUN = crf_func)
 ```
 
@@ -292,13 +294,13 @@ summary_stats(crf_list, data_list, response = "Response") %>%
 
 In this next step we look at the third line of evidence. We do this with the `vadis_line3()` function. This function also returns a list with, you guessed it, three elements.
 
-- A table `rank.table` of variable importance rankings.
-- A distance matrix based on `rank.table`. For this function distances are measured by calculating the pairwise spearman rank correlation coefficients and subtracting from 1. The intercept is excluded when calculating the distances.
-- A table `similarity.coefs` of mean similarity coeficients measured for each variety.
+- `rank.table`: A table of variable importance rankings.
+- `distance.matrix`: A distance matrix based on `rank.table`. For this function distances are measured by calculating the pairwise Spearman rank correlation coefficients and subtracting from 1.
+- `similarity.scores`: A table of mean similarity coeficients measured for each variety. These are equivalent to the Spearman rank correlations.
 
 We then loop over the list of random forests and calculate the variable importance rankings. For `party` forests we use the `varimpAUC()` function, while `ranger` forests use the "permutation" method. With `party` forests we can also specify whether the rankings should be based on conditional importance scores, which are advised when there are many potentially correlated predictors [@Strobl2008]. Since conditional importance takes *much* longer to compute, we'll set it to `FALSE` (the default) here.
 
-```{r line3, cache=TRUE}
+```{r line3, cache=F}
 varimp_line <- vadis_line3(crf_list, path = FALSE, conditional = FALSE)
 ```
 
@@ -308,15 +310,16 @@ varimp_line$distance.matrix %>%
 ```
 
 ```{r}
-varimp_line$similarity.coefs
+varimp_line$similarity.scores %>% 
+  arrange(desc(Similarity))
 ```
 
 
-## Calculating maximum distance in line 2
+### Calculating maximum distance in line 2
 
-In order to appropriately calculate line 2, we need to determine a maximum distance measure with which to normalize the pairwise distances. We define this distance based on what we know about the range of possible values the data is likely to have. We use the distance between two hypothetical varieties whose constraints have exactly the opposite effects. We additionally set the absolute size of all the constraints to a reasonable value to get two varieties that are about as far from one another as we could expect any two varieties to be. We note that this kind of constraint "flipping", i.e. the systematic reversal of the signs of the coefficients in two varieties, is very unlikely to happen in real world contexts, but that’s kind of the point. We are really really unlikely to come across a real world situation where two varieties’ grammars are more dissimilar than this.
+In order to appropriately calculate line 2, we need to determine a maximum distance measure with which to normalize the pairwise distances. We define this distance based on what we know about the range of possible values the data is likely to have. We use the distance between two hypothetical varieties whose constraints have exactly the opposite effects. Such cases of constraint "flipping", i.e. a systematic reversal in the direction of constraint effects between two varieties, is very unlikely to happen in real world contexts, which is exactly the point. We additionally set the absolute size of all the constraints to a reasonable value to get two (hypothetical) varieties that are about as different from one another as we could expect any two varieties to be. We are really, really unlikely to come across a real world situation where two varieties’ grammars are more dissimilar than this.
 
-For a comparison of grammars with *n* constraints, we define the maximum distance by taking the distance between two hypothetical varieties whose constraints all have an absolute effect size of ±1 but whose effect directions are the opposite of one another in the respective varities. For example, in a study comparing grammars with 10 constraints, we calculate the maximum reasonable distance by taking the euclidean distance between hypothetical varieties A and B that look like so.
+For a comparison of grammars with *n* constraints, we define the maximum reasonable distance by taking the distance between two hypothetical varieties whose constraints all have an absolute effect size of ±1 but whose effect directions are the opposite of one another in the respective varities. For example, in a study comparing grammars with 10 constraints, we calculate the maximum reasonable distance by taking the euclidean distance between hypothetical varieties A and B that look like so.
 
 ```{r echo=F, eval = T}
 d <- data.frame(
@@ -325,9 +328,9 @@ d <- data.frame(
 d
 ```
 
-The maximum distance in this case is therefore d(A,B) = `r round(as.numeric(dist(t(d), "euclidean")), 2)`. To normalize our distance matrices we divide the observed distances by this value to give distances within a range of 0 to 1. For the similarity coefficients we simply subtract the distances from 1 to give us a score where larger values represent greater average similarity.
+The maximum distance in this case is therefore d(A,B) = `r round(as.numeric(dist(t(d), "euclidean")), 2)`. To normalize our distance matrices we then divide the observed distances by this value to give distances within a range of 0 to 1. For the similarity scores we simply subtract the distances from 1 to give us a score where larger values represent greater average similarity.
 
-We chose ±1 as the value for our hypothetical constraints since a change from -1 to 1 on the logodds scale represents an increase in probability of approximately 50 percentage points (logit^-1^(-1) = 0.27; logit^-1^(1) = 0.73). It seems very unlikely that we'd ever see such a big reversal in all constraint effects, if any, between two related varieties. Larger values we considered, e.g. ±2, but the larger the maximum distance, the less discrimination there is among the observed distances, and so we opted for slightly smaller values.
+We chose ±1 as the value for our hypothetical constraints since a change from -1 to 1 on the log odds scale represents an increase in probability of approximately 50 percentage points: *P* = logit^-1^(-1) = 0.27; *P* = logit^-1^(1) = 0.73. It seems very unlikely that we'd ever see such a big reversal in *every* constraint's effect between two related varieties. Larger values were also considered, e.g. ±2, but the larger the maximum distance, the less discrimination there is among the observed distances, and so we opted for slightly smaller values.
 
 # Combining the 3 lines
 
@@ -335,16 +338,16 @@ We can merge the similarity scores across the three lines of evidence, and arriv
 
 ```{r}
 mean_sims <- data.frame(
-  line1 = signif_line$similarity.coefs[,2], # get only the values in the 2nd column
-  line2 = coef_line$similarity.coefs[,2],
-  line3 = varimp_line$similarity.coefs[,2]
+  line1 = signif_line$similarity.scores[,2], # get only the values in the 2nd column
+  line2 = coef_line$similarity.scores[,2],
+  line3 = varimp_line$similarity.scores[,2]
 )
 mean_sims$mean <- apply(mean_sims, 1, mean)
 rownames(mean_sims) <- names(data_list)
 round(mean_sims, 3)
 ```
 
-From this we can calculate a mean of the mean similarity coefficients.
+From this we can calculate a mean of the mean similarity scores. This is our **Core Grammar Coefficient** for particle placement across these varieties [@SzmrecsanyiInprep]
 
 ```{r}
 mean(mean_sims$mean)
@@ -362,12 +365,12 @@ round(fused_dist, 3)
 
 # Visualization
 
-We now have our similarity coefficients and distance matrices, which we can visualize in a number of ways.
+Using the distance matrices from the different lines of evidence (or the combined distances), we can visualize the similarities among varieties in a number of ways.
 
 
 ## Clustering
 
-One way we can visualize distances is through clustering methods. There are many different functions and packages for doing this. The simplest case is probably the `hclust()` function.
+One way we can visualize distances is through clustering methods. There are many different functions and packages for doing this, the simplest case probably being the `hclust()` function.
 
 ```{r hclustplot, fig.height=6, fig.width=7}
 # Use the 2nd line of evidence
@@ -375,7 +378,7 @@ line2_clust <- hclust(coef_line$distance.matrix, method = "ward.D2")
 plot(line2_clust, main = "Hierarchical clustering of line 2 distances")
 ```
 
-We can look at the fused matrix combining the 3 lines of evidence.
+We can look at the fused matrix combining the 3 lines of evidence, which gives us a slightly different picture.
 
 ```{r fig.height=6, fig.width=7}
 hclust(fused_dist, method = "ward.D2") %>% 
@@ -395,16 +398,20 @@ ape::nj(coef_line$distance.matrix) %>%
   plot(type = "u", main = "unrooted clustering of line 2 distances")
 ```
 
+```{r fig.height=6, fig.width=7}
+ape::nj(fused_dist) %>% 
+  plot(type = "u", main = "unrooted clustering of fused distances")
+```
+
+
 
 ## Multidimensional scaling
 
-Distance matrices can also be fed into a multidimensional scaling analysis.
-
+Distance matrices can also be fed into a multidimensional scaling analysis, which maps distances onto a 2 or 3 dimensional space. The closer the points are in this space, the more similar the varieties' grammars.
 
 ```{r}
 line2_mds <- cmdscale(coef_line$distance.matrix, k = 3, eig = T) 
 ```
-
 
 ```{r mdsplot, fig.height=6, fig.width=7}
 line2_mds[[1]] %>%
@@ -412,7 +419,7 @@ line2_mds[[1]] %>%
   mutate(genres = rownames(.)) %>% 
   ggplot(aes(V1, V2, label = genres)) +
   geom_point() +
-  geom_text(nudge_y = .05, size = 4)
+  geom_text(nudge_y = .01, size = 4)
 ```
 
 One nice thing about MDS maps is that they can be represented in 2 or 3 dimensions. There are a number of methods for generating 3D plots. The simplest is probably `scatterplot3d`.
@@ -430,10 +437,37 @@ with(dd, {
 
 `plotly` is another powerful package for generating all kinds of interactive graphics. 
 
-
 ```{r fig.height=6, fig.width=7}
 library(plotly)
 dd %>% 
+  mutate(Variety = rownames(.)) %>% 
+  plot_ly() %>%
+  add_trace(x = ~V1, y = ~V2, z = ~V3,
+            type = "scatter3d", inherit = F,
+            marker = list(size = 4),
+            mode = "markers") %>%
+  add_text(x = ~V1, y = ~V2, z = ~V3,
+           text = ~ Variety,
+           type = "scatter3d",
+           mode = "markers",
+           showlegend = FALSE)
+```
+
+We can also run and MDS based on the fused distance matrix.
+
+```{r}
+fused_mds <- cmdscale(fused_dist, k = 3, eig = T)
+```
+
+<!-- We can use a scree plot to see how many dimensions we might want to plot. -->
+
+<!-- ```{r} -->
+<!-- barplot(fused_mds$eig) -->
+<!-- ``` -->
+
+```{r fig.height=6, fig.width=7}
+fused_mds[[1]] %>% # extract the coordinates
+  as.data.frame() %>% 
   mutate(Variety = rownames(.)) %>% 
   plot_ly() %>%
   add_trace(x = ~V1, y = ~V2, z = ~V3,
