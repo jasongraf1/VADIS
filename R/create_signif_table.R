@@ -21,8 +21,8 @@
 #' }
 create_signif_table <- function(mod_list) {
   # identify the class of models
-  type = class(mod_list[[1]])
-  if (type[1] %in% c("lm", "glm", "merMod")){
+  type = class(mod_list[[1]])[1]
+  if (type %in% c("lm", "glm", "merMod", "glmerMod")){
     sig_coef_tab <- as.data.frame(lapply(mod_list, FUN = function(m) ifelse(summary(m)$coefficients[,4] < .05, 1, 0)))
   } else if (type[1] == "brmsfit"){
     # Extract posterior samples and look for any outside 95% HPD interval
@@ -37,6 +37,7 @@ create_signif_table <- function(mod_list) {
     sig_coef_tab <- as.data.frame(lapply(post_samp,
       .fun = function(x) apply(x, 2, mean)))
     rownames(sig_coef_tab) <- names(mod_list)
-  } else stop("I don't recognize this class of model...")
+  } else {
+    stop("I don't recognize this class of model...")}
   return (sig_coef_tab)
 }

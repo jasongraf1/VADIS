@@ -20,7 +20,7 @@
 #' hosmerlem_test(mod, k = 10)
 #' }
 hosmerlem_test <- function(mod, k = 10){
-  if (class(mod)[1] == "merMod"){
+  if (class(mod)[1] == "glmerMod"){
     obs <- lme4::getME(mod, "y")
   } else {
     obs <- mod$y

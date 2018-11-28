@@ -23,7 +23,7 @@
 summary_stats <- function(mlist, dlist = NULL, response = NULL){
   # Loop through models and calculate the stats
   # First create empty dataframe
-  if (class(mlist[[1]])[1] %in% c("glm", "merMod")){
+  if (class(mlist[[1]])[1] %in% c("glm", "glmerMod")){
     out_df <- data.frame(matrix(nrow = length(mlist), ncol = 8)) # regression
     names(out_df) <- c("N", "baseline", "predicted.corr", "C", "AIC", "Max.VIF",
       "kappa", "HosLem.p")

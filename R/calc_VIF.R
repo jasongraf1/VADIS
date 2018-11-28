@@ -28,7 +28,7 @@ calc_VIF <- function (mod) {
   #   stop("mod is not a merMod object")
   # }
   ## adapted from rms::vif
-  v <- vcov(mod)
+  v <- as.matrix(vcov(mod))
   nam <- rownames(v)
   ## exclude intercepts
   ns <- sum(1 * (nam == "Intercept" | nam == "(Intercept)"))

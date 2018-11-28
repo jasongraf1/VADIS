@@ -27,7 +27,7 @@ calc_kappa <- function(mod){
   # adaption of Baayen's collin.fnc() for compatibility with current version
   # of lme4 and R 3.4
   # require(languageR, quietly = T)
-  if (class(mod)[1] == "merMod"){
+  if (class(mod)[1] == "glmerMod"){
     data <- getME(mod, "X")
   } else if (class(mod)[1] %in% c("glm", "lm")) {
     data <- mod$x

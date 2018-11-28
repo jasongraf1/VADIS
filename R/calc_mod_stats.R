@@ -1,15 +1,15 @@
 calc_mod_stats <- function(mod, df = NULL, response = NULL){
   mclass <- class(mod)[1]
-  if (mclass %in% c("glm", "merMod")){
+  if (mclass %in% c("glm", "glmerMod")){
     fits <- fitted(mod)
     preds <- ifelse(fits > .5, 1, 0)
     # get the response column and the AIC for the model
     if (mclass == "glm"){
       y <- mod$y # vector of responses
       aic <- mod$aic
-    } else if (mclass == "merMod") {
-      y <- lme4::getME(fit, "y") # vector of responses
-      aic <- extractAIC(mod)
+    } else if (mclass == "glmerMod") {
+      y <- lme4::getME(mod, "y") # vector of responses
+      aic <- extractAIC(mod)[2]
     }
     # calculate C index and Dxy
     mean.rank <- mean(rank(fits)[y == 1])

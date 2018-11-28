@@ -22,8 +22,8 @@
 #' }
 create_coef_table <- function(mod_list) {
   # identify the class of models
-  type = class(mod_list[[1]])
-  if (type[1] == "merMod"){
+  type = class(mod_list[[1]])[1]
+  if (type %in% c("merMod", "glmerMod")){
     coef_tab <- as.data.frame(lapply(mod_list, FUN = lme4::fixef))
   } else if (type[1] %in% c("lm", "glm", "lrm")) {
     coef_tab <- as.data.frame(lapply(mod_list, FUN = stats::coef))
