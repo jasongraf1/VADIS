@@ -45,7 +45,8 @@ vadis_line1 <- function(mod_list, path = NULL){
   if (path == FALSE) {
     return (output_list)
   } else if (is.null(path)) {
-    path <- paste0("vadis_line1_output_", format(Sys.time(), "%Y-%b-%d_%H.%M"), ".rds")
+    # save to working dir
+    path <- paste0(getwd(), "/vadis_line1_output_", format(Sys.time(), "%Y-%b-%d_%H.%M"), ".rds")
     saveRDS(output_list, file = path)
     return (output_list)
   } else {

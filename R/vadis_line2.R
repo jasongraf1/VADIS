@@ -28,7 +28,7 @@ vadis_line2 <- function(mod_list, path = NULL){
   dist_mat <- dist(t(raw_tab[-1,]), method = "euclidean") # leave out the intercept
 
   # get the maximum reasonable distance
-  dmy <- data.frame(a = sample(c(1,-1), size = nrow(raw_tab), replace = T))
+  dmy <- data.frame(a = sample(c(1,-1), size = nrow(raw_tab[-1,]), replace = T))
   dmy$b <- -dmy$a # exact opposite of a
   maxD <- max(dist(t(dmy), "euclidean"))
 
@@ -52,7 +52,7 @@ vadis_line2 <- function(mod_list, path = NULL){
   if (path == FALSE) {
     return (output_list)
   } else if (is.null(path)) {
-    path <- paste0(getwd(), "/", "vadis_line2_output", format(Sys.time(), "%Y-%b-%d_%H.%M"), ".rds")
+    path <- paste0(getwd(), "/vadis_line2_output", format(Sys.time(), "%Y-%b-%d_%H.%M"), ".rds")
     saveRDS(output_list, file = path)
     return (output_list)
   } else {
