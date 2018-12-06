@@ -46,8 +46,12 @@ f1 <- Response ~ DirObjWordLength + DirObjDefiniteness + DirObjGivenness +
 glm_list <- vector("list")
 for (i in seq_along(data_list)){
   d <- data_list[[i]]
-  # now we'll standardize the model inputs (excluding the response) before fitting 
-  d[all.vars(f1)[-1]] <- lapply(d[all.vars(f1)[-1]], FUN = stand)  
+  
+  # now we'll standardize the model inputs (excluding the response) before fitting.
+  # the outcome variable is always the first element, so we exclude it
+  d[all.vars(f1)[-1]] <- lapply(d[all.vars(f1)[-1]], FUN = stand) # THIS LINE MUST BE ADAPTED TO THE FORMULA
+  
+  # fit the model
   glm_list[[i]] <- glm(f1, data = d, family = binomial, x = TRUE) # note the x = TRUE
 }
 names(glm_list) <- names(data_list) # add names to the list of models
@@ -61,10 +65,17 @@ f2
 #  glmer_list <- vector("list")
 #  for (i in seq_along(data_list)){
 #    d <- data_list[[i]]
-#    # standardize the model inputs (excluding the response and random effects) before fitting
-#    d[all.vars(f2)[-c(1:3)]] <- lapply(d[all.vars(f2)[-c(1:3)]], FUN = stand)
-#    # set optimizer controls to help convergence
-#    glmer_list[[i]] <- glmer(f2, data = d, family = binomial,
+#  
+#    # standardize the model inputs, excluding the response and random effects (see all.vars(f2))
+#    d[all.vars(f2)[-c(1:3)]] <- lapply(d[all.vars(f2)[-c(1:3)]], FUN = stand) # THIS LINE MUST BE ADAPTED TO THE FORMULA
+#    # alternatively we could list each of the fixed effects we need to standardize:
+#    # cols <- c("DirObjWordLength", "DirObjDefiniteness", "DirObjGivenness", "DirObjConcreteness",
+#    #           "DirObjThematicity", "DirectionalPP", "PrimeType", "Semantics", "Surprisal.P",
+#    #           "Surprisal.V", "Register")
+#    # d[cols] <- lapply(d[cols], FUN = stand)
+#  
+#    # fit the model
+#    glmer_list[[i]] <- glmer(f2, data = d, family = binomial, # set optimizer controls to help convergence
 #      control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 1e7)))
 #  }
 #  names(glmer_list) <- names(data_list)
