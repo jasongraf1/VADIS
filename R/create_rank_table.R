@@ -28,17 +28,18 @@ create_rank_table <- function(mod_list, conditional = FALSE) {
   # identify the class of models
   type <- class(mod_list[[1]])
   if (type[1] == "ranger"){
-    varimp_tab <- plyr::ldply(mod_list, .fun = function(m) ranger::importance(m))
-
+    varimp_tab <- as.data.frame(lapply(mod_list, FUN = function(m) ranger::importance(m)))
   } else if (type[1] == "RandomForest"){
     if (conditional){
       cat(paste("Computing varimpAUC() for", length(mod_list), "models. This may take some time...\nIf it takes too long, consider setting conditional = FALSE."))
     } else cat(paste("Computing varimpAUC() for", length(mod_list), "models. This may take some time..."))
-    varimp_tab <- lapply(mod_list, FUN = function(m) party::varimpAUC(m, conditional = conditional)) %>%
-      as.data.frame()
+    varimp_list <- lapply(mod_list, FUN = function(m) party::varimpAUC(m, conditional = conditional))
+    varimp_tab <- data.frame(sapply(varimp_list, c))
+    names(varimp_tab) <- names(mod_list)
   } else if (type == "randomForest"){
-    varimp_tab <- lapply(mod_list, FUN = function(m) randomForest::importance(m)) %>%
-    as.data.frame()
+    varimp_list <- lapply(mod_list, FUN = function(m) randomForest::importance(m))
+    varimp_tab <- data.frame(sapply(varimp_list, c))
+    names(varimp_tab) <- names(mod_list)
   } else stop("I don't recognize this class of random forest model...")
   return (varimp_tab)
 }
