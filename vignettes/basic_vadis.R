@@ -43,16 +43,13 @@ f1 <- Response ~ DirObjWordLength + DirObjDefiniteness + DirObjGivenness +
   Semantics + Surprisal.P + Surprisal.V + Register
 
 ## ------------------------------------------------------------------------
-glm_list <- vector("list")
+glm_list <- vector("list") # empty list to store our models 
 for (i in seq_along(data_list)){
   d <- data_list[[i]]
-  
-  # now we'll standardize the model inputs (excluding the response) before fitting.
-  # the outcome variable is always the first element, so we exclude it
-  d[all.vars(f1)[-1]] <- lapply(d[all.vars(f1)[-1]], FUN = stand) # THIS LINE MUST BE ADAPTED TO THE FORMULA
-  
+  # now standardize the model fixed effects inputs before fitting.
+  d_std <- stand(d, cols = f1) # use the fitting function for convenience
   # fit the model
-  glm_list[[i]] <- glm(f1, data = d, family = binomial, x = TRUE) # note the x = TRUE
+  glm_list[[i]] <- glm(f1, data = d_std, family = binomial, x = TRUE) # note the x = TRUE
 }
 names(glm_list) <- names(data_list) # add names to the list of models
 
@@ -65,18 +62,12 @@ f2
 #  glmer_list <- vector("list")
 #  for (i in seq_along(data_list)){
 #    d <- data_list[[i]]
-#  
-#    # standardize the model inputs, excluding the response and random effects (see all.vars(f2))
-#    d[all.vars(f2)[-c(1:3)]] <- lapply(d[all.vars(f2)[-c(1:3)]], FUN = stand) # THIS LINE MUST BE ADAPTED TO THE FORMULA
-#    # alternatively we could list each of the fixed effects we need to standardize:
-#    # cols <- c("DirObjWordLength", "DirObjDefiniteness", "DirObjGivenness", "DirObjConcreteness",
-#    #           "DirObjThematicity", "DirectionalPP", "PrimeType", "Semantics", "Surprisal.P",
-#    #           "Surprisal.V", "Register")
-#    # d[cols] <- lapply(d[cols], FUN = stand)
-#  
+#    # standardize the model inputs, excluding the response and random effects
+#    d_std <- stand(d, cols = f2) # use the fitting function for convenience
 #    # fit the model
-#    glmer_list[[i]] <- glmer(f2, data = d, family = binomial, # set optimizer controls to help convergence
+#    glmer_list[[i]] <- glmer(f2, data = d_std, family = binomial, # set optimizer controls to help convergence
 #      control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 1e7)))
+#    rm(d, d_std) # remove datasets
 #  }
 #  names(glmer_list) <- names(data_list)
 
@@ -123,13 +114,17 @@ coef_line$distance.matrix %>%
 coef_line$similarity.scores %>% 
   arrange(desc(Similarity))
 
-## ------------------------------------------------------------------------
-crf_func <- function(d) {
-  cforest(f1, d, controls = cforest_unbiased(ntree = 500, mtry = 3))
+## ----crf_list------------------------------------------------------------
+crf_list <- vector("list") # empty list to store our models
+for (i in seq_along(data_list)){
+  d <- data_list[[i]]
+  # fit the random forest and add it to the list
+  crf_list[[i]] <- cforest(f1, d, controls = cforest_unbiased(ntree = 500, mtry = 3))
 }
 
-## ----crf_list, cache = F-------------------------------------------------
-crf_list <- lapply(data_list, FUN = crf_func)
+## ----crf_list2, cache = F, eval = F--------------------------------------
+#  crf_list <- lapply(data_list,
+#    FUN = function(d) cforest(f1, d, controls = cforest_unbiased(ntree = 500, mtry = 3)))
 
 ## ------------------------------------------------------------------------
 summary_stats(crf_list, data_list, response = "Response") %>% 

@@ -4,13 +4,15 @@
 \alias{stand}
 \title{Standardize regression inputs by centering around the mean and dividing by 2 standard deviations}
 \usage{
-stand(x)
+stand(x, cols = NULL)
 }
 \arguments{
-\item{x}{A vector}
+\item{x}{A vector, matrix, or dataframe}
+
+\item{cols}{A character vector of column names, a numeric vector of column indices, or a formula}
 }
 \value{
-A numeric vector
+A numeric vector, a matrix, or a dataframe
 }
 \description{
 Standardize regression inputs by centering around the mean and dividing by 2 standard deviations
@@ -21,10 +23,17 @@ Inspired by the \code{\link[arm]{standardize}} function in the \code{arm} packag
 \examples{
 \dontrun{
 x <- rnorm(10, 5, 3)
+x
 stand(x)
 
 y <- sample(c("A", "B"), 10, replace = T, prob = c(.8, .2))
+y
 stand(y)
+
+df <- data.frame(X = x, Y = y)
+df
+stand(df, 1:2)
+stand(df, Y ~ X)
 }
 }
 \seealso{
