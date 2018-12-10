@@ -274,6 +274,7 @@ for (i in seq_along(data_list)){
   # fit the random forest and add it to the list
   crf_list[[i]] <- cforest(f1, d, controls = cforest_unbiased(ntree = 500, mtry = 3))
 }
+names(crf_list) <- names(data_list)
 ```
 
 This gives us a list of random forests models similar to our list of regression models above.

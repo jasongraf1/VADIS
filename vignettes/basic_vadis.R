@@ -121,6 +121,7 @@ for (i in seq_along(data_list)){
   # fit the random forest and add it to the list
   crf_list[[i]] <- cforest(f1, d, controls = cforest_unbiased(ntree = 500, mtry = 3))
 }
+names(crf_list) <- names(data_list)
 
 ## ----crf_list2, cache = F, eval = F--------------------------------------
 #  crf_list <- lapply(data_list,
