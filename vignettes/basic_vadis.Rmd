@@ -101,7 +101,7 @@ Now we're ready to begin.
 
 ## Step 1
 
-In the first step we identify the most important constraints on our variable. We know from prior research that many different factors influence the choice of particle placement, including:
+In the first step we identify the most important constraints on our variable. We know from prior research [e.g. @Grafmiller2018; @Gries2003] that many different factors influence the choice of particle placement, including:
 
 - Length, definiteness, concreteness, and discourse accessibility of the direct object (Note: personal pronoun direct objects are excluded from this dataset)
 - The semantic idiomaticity of the verb-particle
@@ -110,7 +110,7 @@ In the first step we identify the most important constraints on our variable. We
 - Prior use of V-NP-P or V-P-NP orders
 - The register, genre and/or mode (e.g. informal speech has much more V-NP-P tokens than formal writing) 
 
-These are the predictors we'll include in our variable grammar models. We'll define our model formula using this set.
+These are the predictors we'll include in our variable grammar models. We'll define our model formula using this set. More information on these columns is available in `help(particle_verbs_short)`.
 
 ```{r}
 f1 <- Response ~ DirObjWordLength + DirObjDefiniteness + DirObjGivenness + 
@@ -124,7 +124,7 @@ We now fit logistic regression models to the data (sub)sets. We'll use fixed-eff
 
 Next we simply loop over the datasets in `data_list` and fit a model to each one. Before fitting we'll center and standardize our model inputs [see @Gelman2008]. 
 
-**IMPORTANT:** Standardizing inputs is essential for reliable calculation of the similarity coefficients in line 2 (Step 4). See `?stand` for details. However, **only fixed effects predictors should be standardized**. There are a number of ways to do this but we've included a function `stand()` that will take care of this easily (see `help(stand)` for details)
+**IMPORTANT:** Standardizing inputs is essential for reliable calculation of the similarity coefficients in line 2 (Step 4). However, **only fixed effects predictors should be standardized**. There are a number of ways to do this but we've included a function `stand()` that will take care of this easily. See `help(stand)` for details.
 
 ```{r}
 glm_list <- vector("list") # empty list to store our models 
@@ -155,7 +155,8 @@ for (i in seq_along(data_list)){
   # standardize the model inputs, excluding the response and random effects
   d_std <- stand(d, cols = f2) # use the fitting function for convenience
   # fit the model
-  glmer_list[[i]] <- glmer(f2, data = d_std, family = binomial, # set optimizer controls to help convergence 
+  glmer_list[[i]] <- glmer(f2, data = d_std, family = binomial, 
+    # set optimizer controls to help convergence 
     control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 1e7)))
   rm(d, d_std) # remove datasets
 }
@@ -261,6 +262,25 @@ coef_line$similarity.scores %>%
 
 Note that both `vadis_line1()` and `vadis_line2()` work the same with `glm` and `glmer` models.
 
+### Calculating maximum distance in line 2
+
+In order to appropriately calculate line 2, we need to determine a maximum distance measure with which to normalize the pairwise distances. We define this distance based on what we know about the range of possible values the data is likely to have. We use the distance between two hypothetical varieties whose constraints have exactly the opposite effects. Such cases of constraint "flipping", i.e. a systematic reversal in the direction of constraint effects between two varieties, are very unlikely to happen in real world contexts, which is exactly the point. We additionally set the absolute size of all the constraints to a reasonable value to get two (hypothetical) varieties that are about as different from one another as we could expect any two varieties to be. We are really, really unlikely to come across a real world situation where two varieties’ grammars are more dissimilar than this.
+
+For a comparison of grammars with *n* constraints, we define the maximum reasonable distance by taking the distance between two hypothetical varieties whose constraints all have an absolute effect size of ±1 but whose effect directions are the opposite of one another in the respective varieties. For example, in a study comparing grammars with 10 constraints, we calculate the maximum reasonable distance by taking the euclidean distance between hypothetical varieties A and B that look like so.
+
+```{r echo=F, eval = T}
+d <- data.frame(
+  A = rep(c(-1,1), each = 5),
+  B = rep(c(1,-1), each = 5),
+  row.names = paste0("constraint.", 1:10))
+d
+```
+
+The maximum distance in this case is therefore d(A,B) = `r round(as.numeric(dist(t(d), "euclidean")), 2)`. To normalize our distance matrices we then divide the observed distances by this value to give distances within a range of 0 to 1. For the similarity scores we simply subtract the distances from 1 to give us a score where larger values represent greater average similarity.
+
+We chose ±1 as the value for our hypothetical constraints since a change from -1 to 1 on the log odds scale represents an increase in probability of approximately 50 percentage points: *P* = logit^-1^(-1) = 0.27; *P* = logit^-1^(1) = 0.73. It seems very unlikely that we'd ever see such a big reversal in *every* constraint's effect between two related varieties. Note that these values assume that inputs are standardized according to the procedure described in @Gelman2008. 
+
+
 ## Step 5
 
 In this step we calculate the conditional random forest models of each dataset. From these we'll then calculate variable importance rankings which comprise the third line of evidence. 
@@ -323,22 +343,7 @@ varimp_line$similarity.scores %>%
 ```
 
 
-### Calculating maximum distance in line 2
 
-In order to appropriately calculate line 2, we need to determine a maximum distance measure with which to normalize the pairwise distances. We define this distance based on what we know about the range of possible values the data is likely to have. We use the distance between two hypothetical varieties whose constraints have exactly the opposite effects. Such cases of constraint "flipping", i.e. a systematic reversal in the direction of constraint effects between two varieties, is very unlikely to happen in real world contexts, which is exactly the point. We additionally set the absolute size of all the constraints to a reasonable value to get two (hypothetical) varieties that are about as different from one another as we could expect any two varieties to be. We are really, really unlikely to come across a real world situation where two varieties’ grammars are more dissimilar than this.
-
-For a comparison of grammars with *n* constraints, we define the maximum reasonable distance by taking the distance between two hypothetical varieties whose constraints all have an absolute effect size of ±1 but whose effect directions are the opposite of one another in the respective varities. For example, in a study comparing grammars with 10 constraints, we calculate the maximum reasonable distance by taking the euclidean distance between hypothetical varieties A and B that look like so.
-
-```{r echo=F, eval = T}
-d <- data.frame(
-  a = rep(c(-1,1), each = 5),
-  b = rep(c(1,-1), each = 5))
-d
-```
-
-The maximum distance in this case is therefore d(A,B) = `r round(as.numeric(dist(t(d), "euclidean")), 2)`. To normalize our distance matrices we then divide the observed distances by this value to give distances within a range of 0 to 1. For the similarity scores we simply subtract the distances from 1 to give us a score where larger values represent greater average similarity.
-
-We chose ±1 as the value for our hypothetical constraints since a change from -1 to 1 on the log odds scale represents an increase in probability of approximately 50 percentage points: *P* = logit^-1^(-1) = 0.27; *P* = logit^-1^(1) = 0.73. It seems very unlikely that we'd ever see such a big reversal in *every* constraint's effect between two related varieties. Larger values were also considered, e.g. ±2, but the larger the maximum distance, the less discrimination there is among the observed distances, and so we opted for slightly smaller values.
 
 # Combining the 3 lines
 
@@ -348,10 +353,10 @@ We can merge the similarity scores across the three lines of evidence, and arriv
 mean_sims <- data.frame(
   line1 = signif_line$similarity.scores[,2], # get only the values in the 2nd column
   line2 = coef_line$similarity.scores[,2],
-  line3 = varimp_line$similarity.scores[,2]
+  line3 = varimp_line$similarity.scores[,2],
+  row.names = names(data_list)
 )
-mean_sims$mean <- apply(mean_sims, 1, mean)
-rownames(mean_sims) <- names(data_list)
+mean_sims$mean <- rowMeans(mean_sims)
 round(mean_sims, 3)
 ```
 

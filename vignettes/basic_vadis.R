@@ -65,7 +65,8 @@ f2
 #    # standardize the model inputs, excluding the response and random effects
 #    d_std <- stand(d, cols = f2) # use the fitting function for convenience
 #    # fit the model
-#    glmer_list[[i]] <- glmer(f2, data = d_std, family = binomial, # set optimizer controls to help convergence
+#    glmer_list[[i]] <- glmer(f2, data = d_std, family = binomial,
+#      # set optimizer controls to help convergence
 #      control = glmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 1e7)))
 #    rm(d, d_std) # remove datasets
 #  }
@@ -114,6 +115,13 @@ coef_line$distance.matrix %>%
 coef_line$similarity.scores %>% 
   arrange(desc(Similarity))
 
+## ----echo=F, eval = T----------------------------------------------------
+d <- data.frame(
+  A = rep(c(-1,1), each = 5),
+  B = rep(c(1,-1), each = 5),
+  row.names = paste0("constraint.", 1:10))
+d
+
 ## ----crf_list------------------------------------------------------------
 crf_list <- vector("list") # empty list to store our models
 for (i in seq_along(data_list)){
@@ -142,20 +150,14 @@ varimp_line$distance.matrix %>%
 varimp_line$similarity.scores %>% 
   arrange(desc(Similarity))
 
-## ----echo=F, eval = T----------------------------------------------------
-d <- data.frame(
-  a = rep(c(-1,1), each = 5),
-  b = rep(c(1,-1), each = 5))
-d
-
 ## ------------------------------------------------------------------------
 mean_sims <- data.frame(
   line1 = signif_line$similarity.scores[,2], # get only the values in the 2nd column
   line2 = coef_line$similarity.scores[,2],
-  line3 = varimp_line$similarity.scores[,2]
+  line3 = varimp_line$similarity.scores[,2],
+  row.names = names(data_list)
 )
-mean_sims$mean <- apply(mean_sims, 1, mean)
-rownames(mean_sims) <- names(data_list)
+mean_sims$mean <- rowMeans(mean_sims)
 round(mean_sims, 3)
 
 ## ------------------------------------------------------------------------
