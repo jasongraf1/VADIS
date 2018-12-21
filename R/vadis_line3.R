@@ -8,7 +8,7 @@
 #'
 #' @details The function loops through a list of model objects, extracts the coefficient estimates, and compiles them in a single dataframe.
 #'
-#' @return A list of length 3
+#' @return A list of length 4
 #'
 #' @export
 #'
@@ -26,9 +26,11 @@ vadis_line3 <- function(mod_list, path = NULL, conditional = FALSE){
   raw_tab <- create_rank_table(mod_list, conditional = conditional) # call function to create varimp rankings
   output_list[[1]] <- raw_tab
 
+  output_list[[2]] <- as.data.frame(lapply(raw_tab, rank))
   cor_mat <- cor(raw_tab, method = "spearman")
   dist_mat <- 1 - cor_mat
-  output_list[[2]] <- as.dist(dist_mat)
+
+  output_list[[3]] <- as.dist(dist_mat)
 
   sim_tab <- cor_mat %>%
     reshape2::melt(id.vars = NULL) %>%
@@ -36,9 +38,12 @@ vadis_line3 <- function(mod_list, path = NULL, conditional = FALSE){
     dplyr::filter(value < 1) %>%
     summarise(Similarity = mean(value, na.rm = T))
 
-  output_list[[3]] <- as.data.frame(sim_tab)
+  output_list[[4]] <- as.data.frame(sim_tab)
 
-  names(output_list) <- c("rank.table", "distance.matrix", "similarity.scores")
+  names(output_list) <- c("varimp.table",
+                          "rank.table",
+                          "distance.matrix",
+                          "similarity.scores")
 
   if (path == FALSE) {
     return (output_list)
