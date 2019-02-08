@@ -28,17 +28,7 @@ create_coef_table <- function(mod_list) {
   } else if (type[1] %in% c("lm", "glm", "lrm")) {
     coef_tab <- as.data.frame(lapply(mod_list, FUN = stats::coef))
   } else if (type[1] == "brmsfit"){
-    # Extract posterior samples
-    post_samp <- vector("list")
-    for(i in 1:length(mod_list)){
-      mod <- mod_list[[i]]
-      post_samp[[i]] <- posterior_samples(mod, pars = '^b')
-    }
-    names(post_samp) <- names(mod_list)
-
-    # create dataframe with mean posterior estimate
-    coef_tab <- as.data.frame(lapply(post_samp, FUN = function(x) apply(x, 2, mean)))
-    rownames(coef_tab) <- names(mod_list)
+    coef_tab <- as.data.frame(lapply(stan_models, FUN = function(x) summary(x)$fixed[,1]))
   } else stop("I don't recognize this class of model...")
   return (coef_tab)
 }

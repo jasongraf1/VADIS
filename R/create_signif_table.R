@@ -25,18 +25,17 @@ create_signif_table <- function(mod_list) {
   if (type %in% c("lm", "glm", "merMod", "glmerMod")){
     sig_coef_tab <- as.data.frame(lapply(mod_list, FUN = function(m) ifelse(summary(m)$coefficients[,4] < .05, 1, 0)))
   } else if (type[1] == "brmsfit"){
-    # Extract posterior samples and look for any outside 95% HPD interval
-    post_samp <- vector("list")
-    for(i in 1:length(mod_list)){
-      mod <- mod_list[[i]]
-      post_samp[[i]] <- posterior_samples(mod, pars = '^b')
-    }
-    names(post_samp) <- names(mod_list)
 
-    # create dataframe with mean posterior estimate
-    sig_coef_tab <- as.data.frame(lapply(post_samp,
-      .fun = function(x) apply(x, 2, mean)))
-    rownames(sig_coef_tab) <- names(mod_list)
+    sig_coef_tab <- as.data.frame(lapply(mod_list,
+      FUN = function(m){
+        fixed <- as.data.frame(summary(m)$fixed)
+        sig <- rep(0, nrow(fixed))
+        sig[fixed$`l-95% CI` > 0 & fixed$`u-95% CI` > 0] <- 1
+        sig[fixed$`l-95% CI` < 0 & fixed$`u-95% CI` < 0] <- 1
+        names(sig) <- rownames(fixed)
+        return(sig)
+      }))
+    names(sig_coef_tab) <- names(mod_list)
   } else {
     stop("I don't recognize this class of model...")}
   return (sig_coef_tab)
