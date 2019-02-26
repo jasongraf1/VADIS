@@ -45,7 +45,8 @@ stand <- function(x, cols = NULL){
       stop("Columns must be specified for standardizing")
     } else if (class(cols) == "formula") {
       f_vars <- attr(terms(cols), "term.labels")
-      cols <- f_vars[which(!grepl("\\|", f_vars))]
+      # remove random effects and interaction terms
+      cols <- f_vars[which(!grepl("(:|\\|)", f_vars))]
     }
     x[cols] <- lapply(x[cols], std)
   } else x <- std(x)
