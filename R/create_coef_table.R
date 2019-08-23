@@ -28,7 +28,7 @@ create_coef_table <- function(mod_list) {
   } else if (type[1] %in% c("lm", "glm", "lrm")) {
     coef_tab <- as.data.frame(lapply(mod_list, FUN = stats::coef))
   } else if (type[1] == "brmsfit"){
-    coef_tab <- as.data.frame(lapply(stan_models, FUN = function(x) summary(x)$fixed[,1]))
+    coef_tab <- as.data.frame(lapply(mod_list, FUN = function(x) summary(x)$fixed[,1]))
   } else stop("I don't recognize this class of model...")
   return (coef_tab)
 }
