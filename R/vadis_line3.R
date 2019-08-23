@@ -26,7 +26,7 @@ vadis_line3 <- function(mod_list, path = NULL, conditional = FALSE){
   raw_tab <- create_rank_table(mod_list, conditional = conditional) # call function to create varimp rankings
   output_list[[1]] <- raw_tab
 
-  output_list[[2]] <- as.data.frame(lapply(raw_tab, rank))
+  output_list[[2]] <- as.data.frame(lapply(raw_tab, function(x) rank(-x)))
   cor_mat <- cor(raw_tab, method = "spearman")
   dist_mat <- 1 - cor_mat
 
