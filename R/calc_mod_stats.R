@@ -50,8 +50,8 @@ calc_mod_stats <- function(mod, df = NULL, response = NULL){
         fits <- preds[,2] ## second column in matrix
         predicted_class <- colnames(preds)[2]
         print(paste("Predictions are for", predicted_class))
+        preds <- ifelse(fits > .5, predicted_class, colnames(preds)[1])
       }
-
     } else if (mclass == "randomForest"){
       preds <- predict(mod, df, type = "response")
       fits <- as.numeric(preds) - 1
