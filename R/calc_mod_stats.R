@@ -37,15 +37,30 @@ calc_mod_stats <- function(mod, df = NULL, response = NULL){
     resp <- df[, response]
     y <- as.numeric(resp) - 1
     if (mclass == "ranger"){
+      ## ranger allows predicted responses or probabilities
       preds <- mod$predictions
-      fits <- as.numeric(preds) - 1
+      if(is.factor(preds)){
+        ## if `probability = FALSE`, predictions are factor of the response
+        ## values
+        fits <- as.numeric(preds) - 1
+        predicted_class <- NULL
+      } else {
+        ## if `probability = TRUE`, predictions are matrix of the predicted
+        ## probabilities for each response class
+        fits <- preds[,2] ## second column in matrix
+        predicted_class <- colnames(preds)[2]
+        print(paste("Predictions are for", predicted_class))
+      }
+
     } else if (mclass == "randomForest"){
       preds <- predict(mod, df, type = "response")
       fits <- as.numeric(preds) - 1
     } else if(mclass == "RandomForest"){
       trp <- treeresponse(mod)
+      predicted_class <- colnames(preds)[2]
       fits <- sapply(trp, FUN = function(x) x[2])
       preds <- ifelse(fits > .5, 1, 0)
+      print(paste("Predictions are for", predicted_class))
     }
     # put the output into a vector
     # calculate C index and Dxy
