@@ -50,14 +50,15 @@ calc_mod_stats <- function(mod, df = NULL, response = NULL){
         fits <- preds[,2] ## second column in matrix
         predicted_class <- colnames(preds)[2]
         print(paste("Predictions are for", predicted_class))
-        preds <- ifelse(fits > .5, predicted_class, colnames(preds)[1])
+        preds <- ifelse(fits > .5, 1, 0)
       }
+      pred_correct <- 1 - mod$prediction.error
     } else if (mclass == "randomForest"){
       preds <- predict(mod, df, type = "response")
       fits <- as.numeric(preds) - 1
     } else if(mclass == "RandomForest"){
       trp <- treeresponse(mod)
-      predicted_class <- colnames(preds)[2]
+      predicted_class <- colnames(trp)[2]
       fits <- sapply(trp, FUN = function(x) x[2])
       preds <- ifelse(fits > .5, 1, 0)
       print(paste("Predictions are for", predicted_class))
