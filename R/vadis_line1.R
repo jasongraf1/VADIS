@@ -30,11 +30,13 @@ vadis_line1 <- function(mod_list, path = NULL){
   output_list[[2]] <- dist_mat/nrow(raw_tab[-1,]) # normalize by number of constraints
 
   dist_mat2 <- (nrow(raw_tab[-1,]) - dist_mat)/nrow(raw_tab[-1,])
+
   sim_tab <- dist_mat2 %>%
     as.matrix() %>%
     as.data.frame() %>%
-    reshape2::melt(id.vars = NULL) %>%
-    group_by(variable) %>%
+    rownames_to_column("variety") %>%
+    pivot_longer(-variety) %>%
+    group_by(name) %>%
     dplyr::filter(value > 0) %>%
     summarise(Similarity = mean(value, na.rm = T))
 
