@@ -33,8 +33,10 @@ get_posterior_samples <- function(mod_list, n = 200L){
         sample_df <- as.data.frame(do.call("rbind", coef_sample_list))
         names(sample_df) <- paste("run", 1:n, sep = "")
       } else if (class(mod) == "brmsfit"){
-        sample_df <- brms::posterior_samples(mod, pars = '^b')[,-1]
-        sample_df <- t(sample_df[sample(1:nrow(sample_df), n),]) # no intercept
+        sample_df <- brms::posterior_samples(mod, pars = '^b')[,-1] %>%
+          as.data.frame() %>%
+          slice_sample(n = n) %>%
+          t()
       }
       return(sample_df)
     })
