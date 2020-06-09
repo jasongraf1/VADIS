@@ -39,7 +39,8 @@ vadis_line2 <- function(mod_list, path = NULL){
   sim_tab <- dist_mat %>%
     as.matrix() %>%
     as.data.frame() %>%
-    reshape2::melt(id.vars = NULL) %>%
+    rownames_to_column("variety") %>%
+    pivot_longer(-variety) %>%
     mutate(weighted = value/maxD) %>% # weight distances by maxD
     group_by(variable) %>%
     dplyr::filter(value > 0) %>%      # ignore distances to self
@@ -49,14 +50,11 @@ vadis_line2 <- function(mod_list, path = NULL){
 
   names(output_list) <- c("coef.table", "distance.matrix", "similarity.scores")
 
-  if (path == FALSE) {
-    return (output_list)
-  } else if (is.null(path)) {
-    path <- paste0(getwd(), "/vadis_line2_output", format(Sys.time(), "%Y-%b-%d_%H.%M"), ".rds")
+  if (is.null(path)) {
+    path <- paste0(getwd(), "/vadis_line2_output_", format(Sys.time(), "%Y-%b-%d_%H-%M"), ".rds")
+    saveRDS(output_list, file = path) }
+  else if (is.character(path)) {
     saveRDS(output_list, file = path)
-    return (output_list)
-  } else {
-    saveRDS(output_list, file = path)
-    return (output_list)
   }
+  return (output_list)
 }
