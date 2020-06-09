@@ -42,7 +42,7 @@ vadis_line2 <- function(mod_list, path = NULL){
     rownames_to_column("variety") %>%
     pivot_longer(-variety) %>%
     mutate(weighted = value/maxD) %>% # weight distances by maxD
-    group_by(variable) %>%
+    group_by(name) %>%
     dplyr::filter(value > 0) %>%      # ignore distances to self
     summarise(Similarity = 1 - mean(weighted))
 
