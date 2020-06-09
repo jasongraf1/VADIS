@@ -1,13 +1,13 @@
 #' Create Table of Variable Importance Rankings for VADIS analysis
 #'
-#' @param mod_list A list of random forest model objects, generated with \code{fit_vadis_rf()}. Currently supports objects of \code{\link[party]{RandomForest-class}}, \code{\link[ranger]{ranger}}, and \code{\link[randomForest]{randomForest}}
+#' @param mod_list A list of random forest model objects. Currently supports objects of class \code{\link[party]{RandomForest-class}}, \code{\link[ranger]{ranger}}, and \code{\link[randomForest]{randomForest}}
 #' @param path Path in which to save the output (as \code{.csv} file). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.
 #' @param conditional logical. Should unconditional (default) or conditional permutation variable importance be computed. Only applies to \code{RandomForest-class} models from the \code{\link[party]{party}} package.
 #'
 #' @author Jason Grafmiller
 #'
 #' @details The function loops through a list of random forest objects, extracts the variable importance estimates, and compiles them in a single dataframe.
-#' For forests fit with \code{ranger} or \code{randomForest}, the \code{importance} argument must be specified.
+#' For forests fit with \code{\link[ranger]{ranger}} or \code{\link[randomForest]{randomForest}}, the \code{importance} argument must be specified.
 #' #'
 #' @return A dataframe
 #'
@@ -20,7 +20,7 @@
 #'
 #' rf_fnc <- function(x) ranger::ranger(fmla, data = x, importance = "permutation")
 #'
-#' rf_list <- fit_models(brown_genitives, split.by = "Genre", fit.func = rf_fnc, path = FALSE)
+#' rf_list <- lapply(data_list, rf_func)
 #'
 #' create_rank_table(rf_list, path = FALSE)
 #' }
