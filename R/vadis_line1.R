@@ -42,17 +42,13 @@ vadis_line1 <- function(mod_list, path = NULL){
 
   names(output_list) <- c("signif.table", "distance.matrix", "similarity.scores")
 
-  if (path == FALSE) {
-    return (output_list)
-  } else if (is.null(path)) {
-    # save to working dir
-    path <- paste0(getwd(), "/vadis_line1_output_", format(Sys.time(), "%Y-%b-%d_%H.%M"), ".rds")
+  if (is.null(path)) {
+    path <- paste0(getwd(), "/vadis_line2_output_", format(Sys.time(), "%Y-%b-%d_%H-%M"), ".rds")
+    saveRDS(output_list, file = path) }
+  else if (is.character(path)) {
     saveRDS(output_list, file = path)
-    return (output_list)
-  } else {
-    saveRDS(output_list, file = path)
-    return (output_list)
   }
+  return (output_list)
 }
 
 
