@@ -63,7 +63,7 @@ create_mds_samples <- function(mod_list, n_samples = 200L, k = 3, vadis_line = N
     cur_mds = as.data.frame(cur_mds)
     ## align
     for (dm in seq_len(k)){
-      if(cor(mds_orig[, dm], cur_mds[, dm]) < 0) {
+      if(cor(orig_mds_df[, dm], cur_mds[, dm]) < 0) {
         cur_mds[, dm] <- cur_mds[, dm]*-1
       }}
     mds_list[[i]] <- cur_mds
