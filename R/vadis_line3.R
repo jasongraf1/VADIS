@@ -14,12 +14,16 @@
 #'
 #' @examples
 #' \dontrun{
-#' lm_fnc <- function(x) lm(Sepal.Length ~ Petal.Length + Petal.Width, data = x)
-#' rm_list <- fit.vadis.RM(iris, split.by = "Species", fit.func = lm_fnc,
-#'   path = FALSE)
-#' summary(rm_list[[1]])
+#' data_list <- split(particle_verbs_short, particle_verbs_short$Variety, drop = TRUE)
 #'
-#' line3 <- calc_line3(rm_list, path = FALSE)
+#' fmla <- Response ~ DirObjWordLength + DirObjDefiniteness + DirObjGivenness + DirObjConcreteness + DirObjThematicity + DirectionalPP + PrimeType + Semantics + Surprisal.P + Surprisal.V + Register
+#'
+#' rf_func <- function(x) ranger(fmla, data = x, importance = "permutation")
+#'
+#' rf_list <- lapply(data_list, rf_func)
+#' names(rf_list) <- names(data_list)
+#'
+#' line3 <- vadis_line3(rf_list, path = FALSE)
 #' }
 vadis_line3 <- function(mod_list, path = NULL, conditional = FALSE){
   output_list <- vector("list")

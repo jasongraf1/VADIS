@@ -13,12 +13,16 @@
 #'
 #' @examples
 #' \dontrun{
-#' lm_fnc <- function(x) lm(Sepal.Length ~ Petal.Length + Petal.Width + Sepal.Width, data = x)
-#' rm_list <- fit.vadis.RM(iris, split.by = "Species", fit.func = lm_fnc,
-#'   path = FALSE)
-#' summary(rm_list[[1]])
+#' data_list <- split(particle_verbs_short, particle_verbs_short$Variety, drop = TRUE)
 #'
-#' line1 <- calc_line1(rm_list, path = FALSE)
+#' fmla <- Response ~ DirObjWordLength + DirObjDefiniteness + DirObjGivenness + DirObjConcreteness + DirObjThematicity + DirectionalPP + PrimeType + Semantics + Surprisal.P + Surprisal.V + Register
+#'
+#' glm_func <- function(x) glm(fmla, data = x, family = binomial)
+#'
+#' glm_list <- lapply(data_list, glm_func)
+#' names(glm_list) <- names(data_list)
+#'
+#' line1 <- vadis_line1(glm_list, path = FALSE)
 #' }
 vadis_line1 <- function(mod_list, path = NULL){
 
