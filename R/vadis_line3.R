@@ -36,8 +36,10 @@ vadis_line3 <- function(mod_list, path = NULL, conditional = FALSE){
   output_list[[3]] <- as.dist(dist_mat)
 
   sim_tab <- cor_mat %>%
-    reshape2::melt(id.vars = NULL) %>%
-    group_by(Var1) %>%
+    as.data.frame() %>%
+    rownames_to_column("variety") %>%
+    pivot_longer(-variety) %>%
+    group_by(name) %>%
     dplyr::filter(value < 1) %>%
     summarise(Similarity = mean(value, na.rm = T))
 
