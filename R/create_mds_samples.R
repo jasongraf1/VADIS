@@ -28,8 +28,7 @@ create_mds_samples <- function(mod_list, n_samples = 200L, k = 3, vadis_line = N
   orig_dist <- dist(t(vadis_line$coef.table[-1,]), method = "euclidean")
   orig_mds <- cmdscale(orig_dist, k = k, eig = T)
   orig_mds_df <- as.data.frame(orig_mds[[1]]) %>%
-    rename(x = "V1", y = "V2", z = "V3") %>%
-    rownames_to_column("variety")
+    rename(x = "V1", y = "V2", z = "V3")
 
   sample_list <- get_posterior_samples(mod_list, n = n_samples)
 
