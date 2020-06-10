@@ -25,7 +25,7 @@ create_mds_samples <- function(mod_list, n_samples = 200L, k = 3, vadis_line = N
     vadis_line <- vadis_line2(mod_list)
   }
 
-  orig_dist <- vadis_line$distance.matrix
+  orig_dist <- dist(t(vadis_line$coef.table[-1,]), method = "euclidean")
   orig_mds <- cmdscale(orig_dist, k = k, eig = T)
   orig_mds_df <- as.data.frame(orig_mds[[1]]) %>%
     rename(x = "V1", y = "V2", z = "V3") %>%
@@ -51,14 +51,14 @@ create_mds_samples <- function(mod_list, n_samples = 200L, k = 3, vadis_line = N
     cur_dist <- dist(cur_df, "euclidean")
 
     ## Get the maximum reasonable distance
-    dmy <- data.frame(a = sample(c(1,-1), size = ncol(cur_df), replace = T))
-    dmy$b <- -dmy$a # exact opposite of a
-    maxD <- max(dist(t(dmy), "euclidean"))
+    # dmy <- data.frame(a = sample(c(1,-1), size = ncol(cur_df), replace = T))
+    # dmy$b <- -dmy$a # exact opposite of a
+    # maxD <- max(dist(t(dmy), "euclidean"))
+    #
+    # ## Create weighted distance matrix
+    # cur_dist_wt <- cur_dist/maxD
 
-    ## Create weighted distance matrix
-    cur_dist_wt <- cur_dist/maxD
-
-    cur_mds <- cmdscale(cur_dist_wt, k = k)
+    cur_mds <- cmdscale(cur_dist, k = k)
     colnames(cur_mds) <- letters[(27-k):26]
     cur_mds = as.data.frame(cur_mds)
     ## align
