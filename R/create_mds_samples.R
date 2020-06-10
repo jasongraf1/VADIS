@@ -31,7 +31,7 @@ create_mds_samples <- function(mod_list, n_samples = 200L, k = 3, vadis_line = N
     rename(x = "V1", y = "V2", z = "V3") %>%
     rownames_to_column("variety")
 
-  sample_list <- get_posterior_samples(mod_list, n = n)
+  sample_list <- get_posterior_samples(mod_list, n = n_samples)
 
   mds_list <- vector("list")
   ncoef <- nrow(sample_list[[1]]) ## number of coefficients in the model(s)
