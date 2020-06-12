@@ -28,7 +28,7 @@ create_rank_table <- function(mod_list, conditional = FALSE) {
   # identify the class of models
   type <- class(mod_list[[1]])
   if (type[1] == "ranger"){
-    varimp_tab <- as.data.frame(do.call("cbind", lapply(crf_list, FUN = function(m) ranger::importance(m))))
+    varimp_tab <- as.data.frame(do.call("cbind", lapply(mod_list, FUN = function(m) ranger::importance(m))))
   } else if (type[1] == "RandomForest"){
     if (conditional){
       cat(paste("Computing varimpAUC() for", length(mod_list), "models. This may take some time...\nIf it takes too long, consider setting conditional = FALSE."))
