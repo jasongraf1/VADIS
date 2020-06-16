@@ -24,10 +24,10 @@
 #'
 #' line1 <- vadis_line1(glm_list, path = FALSE)
 #' }
-vadis_line1 <- function(mod_list, path = NULL){
+vadis_line1 <- function(mod_list, path = NULL, method = c("freq", "pd", "rope", "map")){
 
   output_list <- vector("list")
-  raw_tab <- create_signif_table(mod_list)
+  raw_tab <- create_signif_table(mod_list, method = method)
   output_list[[1]] <- raw_tab
 
   dist_mat <- dist(t(raw_tab[-1,]), method = "euclidean")^2 # omit intercept

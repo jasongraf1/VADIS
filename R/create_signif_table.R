@@ -19,22 +19,66 @@
 #'
 #' create_coef_table(rm_list)
 #' }
-create_signif_table <- function(mod_list) {
+create_signif_table <- function(mod_list, method = c("freq", "pd", "rope", "map")) {
   # identify the class of models
   type = class(mod_list[[1]])[1]
   if (type %in% c("lm", "glm", "merMod", "glmerMod")){
-    sig_coef_tab <- as.data.frame(lapply(mod_list, FUN = function(m) ifelse(summary(m)$coefficients[,4] < .05, 1, 0)))
+    sig_coef_tab <- as.data.frame(lapply(mod_list, FUN = function(m) ifelse(summary(m)$coefficients[,4] < alpha, 1, 0)))
   } else if (type[1] == "brmsfit"){
-
-    sig_coef_tab <- as.data.frame(lapply(mod_list,
-      FUN = function(m){
-        fixed <- as.data.frame(summary(m)$fixed)
-        sig <- rep(0, nrow(fixed))
-        sig[fixed$`l-95% CI` > 0 & fixed$`u-95% CI` > 0] <- 1
-        sig[fixed$`l-95% CI` < 0 & fixed$`u-95% CI` < 0] <- 1
-        names(sig) <- rownames(fixed)
-        return(sig)
-      }))
+    if (method == "rope"){
+      sig_coef_tab <- as.data.frame(
+        lapply(mod_list,
+           FUN = function(m){
+             sig <- bayestestR::p_rope(m) %>%
+               as.data.frame() %>%
+               mutate(
+                 significance = ifelse(p_ROPE < .05, 1, 0)
+               ) %>%
+               pull(significance)
+             names(sig) <- rownames(as.data.frame(summary(m)$fixed))
+             return(sig)
+           }))
+      names(sig_coef_tab) <- names(mod_list)
+    } else if (method == "pd"){
+      sig_coef_tab <- as.data.frame(
+        lapply(mod_list,
+               FUN = function(m){
+                 sig <- bayestestR::p_direction(m) %>%
+                   as.data.frame() %>%
+                   mutate(
+                     significance = ifelse(pd > .975, 1, 0)
+                   ) %>%
+                   pull(significance)
+                 names(sig) <- rownames(as.data.frame(summary(m)$fixed))
+                 return(sig)
+               }))
+      names(sig_coef_tab) <- names(mod_list)
+    } else if (method == "map"){
+      sig_coef_tab <- as.data.frame(
+        lapply(mod_list,
+               FUN = function(m){
+                 sig <- bayestestR::p_map(m) %>%
+                   as.data.frame() %>%
+                   mutate(
+                     significance = ifelse(p_MAP < .05, 1, 0)
+                   ) %>%
+                   pull(significance)
+                 names(sig) <- rownames(as.data.frame(summary(m)$fixed))
+                 return(sig)
+               }))
+      names(sig_coef_tab) <- names(mod_list)
+    } else {
+      sig_coef_tab <- as.data.frame(
+        lapply(mod_list,
+        FUN = function(m){
+          fixed <- as.data.frame(summary(m)$fixed)
+          sig <- rep(0, nrow(fixed))
+          sig[fixed$`l-95% CI` > 0 & fixed$`u-95% CI` > 0] <- 1
+          sig[fixed$`l-95% CI` < 0 & fixed$`u-95% CI` < 0] <- 1
+          names(sig) <- rownames(fixed)
+          return(sig)
+        }))
+    }
     names(sig_coef_tab) <- names(mod_list)
   } else {
     stop("I don't recognize this class of model...")}
