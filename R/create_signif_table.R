@@ -2,6 +2,7 @@
 #'
 #' @param mod_list A list of regression model objects.
 #' @param path Path in which to save the output (as \code{.csv} file). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.
+#' @param method string indicating which method to use for assessing significance from Bayesian models.
 #'
 #' @author Jason Grafmiller
 #'
