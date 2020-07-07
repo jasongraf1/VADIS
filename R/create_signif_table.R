@@ -33,7 +33,7 @@ create_signif_table <- function(mod_list, method = c("freq", "pd", "rope", "map"
              sig <- bayestestR::p_rope(m) %>%
                as.data.frame() %>%
                mutate(
-                 significance = ifelse(p_ROPE < .05, 1, 0)
+                 significance = ifelse(p_ROPE < .025, 1, 0)
                ) %>%
                pull(significance)
              names(sig) <- rownames(as.data.frame(summary(m)$fixed))
