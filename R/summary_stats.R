@@ -33,7 +33,7 @@ summary_stats <- function(model_list, data_list = NULL, response = NULL){
   } else if (mclass == "brmsfit") {
     out_df <- data.frame(matrix(nrow = length(model_list), ncol = 8)) # regression
     names(out_df) <- c("N", "baseline", "predicted.corr", "Brier", "C", "WAIC",
-                       "elpd_loo", "p_loo")
+                       "elpd_loo", "p_loo", "looic")
   } else if (mclass %in% c("ranger", "RandomForest", "randomForest")){
     out_df <- data.frame(matrix(nrow = length(model_list), ncol = 4)) # random forests
     names(out_df) <- c("N", "baseline", "predicted.corr", "Brier", "C")
