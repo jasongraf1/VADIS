@@ -58,7 +58,7 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
       Brier = brier_score,
       C = c.index,
       WAIC = aic,
-      elpd_loo = loo_estimates[1, 1]
+      elpd_loo = loo_estimates[1, 1],
       p_loo = loo_estimates[2, 1],
       looic = loo_estimates[3, 1],
       kappa = kappa
