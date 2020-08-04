@@ -2,7 +2,7 @@
 #'
 #' @param mod_list A list of random forest model objects.
 #' @param path Path in which to save the output as an R data file (\code{.rds}). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.
-#' @param conditional logical. Should unconditional (default) or conditional permutation variable importance be computed. Only applies to \code{RandomForest-class} models from the \code{\link[party]{party}} package.
+#' @param conditional logical. Should conditional (default) or unconditional permutation variable importance be computed. Only applies to \code{RandomForest-class} models from the \code{\link[party]{party}} package.
 #'
 #' @author Jason Grafmiller
 #'
@@ -25,7 +25,7 @@
 #'
 #' line3 <- vadis_line3(rf_list, path = FALSE)
 #' }
-vadis_line3 <- function(mod_list, path = NULL, conditional = FALSE){
+vadis_line3 <- function(mod_list, path = NULL, conditional = TRUE){
   output_list <- vector("list")
   raw_tab <- create_rank_table(mod_list, conditional = conditional) # call function to create varimp rankings
   output_list[[1]] <- raw_tab

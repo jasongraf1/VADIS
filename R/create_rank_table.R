@@ -2,7 +2,7 @@
 #'
 #' @param mod_list A list of random forest model objects. Currently supports objects of class \code{\link[party]{RandomForest-class}}, \code{\link[ranger]{ranger}}, and \code{\link[randomForest]{randomForest}}
 #' @param path Path in which to save the output (as \code{.csv} file). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.
-#' @param conditional logical. Should unconditional (default) or conditional permutation variable importance be computed. Only applies to \code{RandomForest-class} models from the \code{\link[party]{party}} package.
+#' @param conditional logical. Should conditional (default) or unconditional permutation variable importance be computed. Only applies to \code{RandomForest-class} models from the \code{\link[party]{party}} package.
 #'
 #' @author Jason Grafmiller
 #'
@@ -29,14 +29,14 @@
 #'
 #' create_rank_table(rf_list, path = FALSE)
 #' }
-create_rank_table <- function(mod_list, conditional = FALSE) {
+create_rank_table <- function(mod_list, conditional = TRUE) {
   # identify the class of models
   type <- class(mod_list[[1]])
   if (type[1] == "ranger"){
     varimp_tab <- as.data.frame(do.call("cbind", lapply(mod_list, FUN = function(m) ranger::importance(m))))
   } else if (type[1] == "RandomForest"){
     if (conditional){
-      cat(paste("Computing varimpAUC() for", length(mod_list), "models. This may take some time...\nIf it takes too long, consider setting conditional = FALSE."))
+      cat(paste("Computing conditional variable importance for", length(mod_list), "models. This may take some time...\nIf it takes too long, consider setting `conditional = FALSE`."))
     } else cat(paste("Computing varimpAUC() for", length(mod_list), "models. This may take some time..."))
     varimp_list <- lapply(
       mod_list,
