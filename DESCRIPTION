@@ -22,7 +22,7 @@ Imports:
   bayestestR (>= 0.6.0),
   ggplot2 (>= 3.0),
   gridExtra (>= 2.3),
-  permimp (>=1.0)
+  permimp (>= 1.0)
 Suggests:
   tidyverse (>= 1.2.1),
   broom (>= 0.5),
