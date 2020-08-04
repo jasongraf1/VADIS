@@ -27,16 +27,16 @@ summary_stats <- function(model_list, data_list = NULL, response = NULL){
   # First create empty dataframe
   if (mclass %in% c("glm", "glmerMod")){
     out_df <- data.frame(matrix(nrow = length(model_list), ncol = 8)) # regression
-    names(out_df) <- c("N", "baseline", "predicted.corr", "Brier",  "C", "AIC", "Max.VIF",
+    names(out_df) <- c("N", "baseline", "predicted.corr", "Brier",  "C", "LogScore", "AIC", "Max.VIF",
       "kappa", "HosLem.p")
     if (is.na(out_df$kappa)) msg <- c(msg, "To calculate kappa scores include `x = TRUE` argument in glm()")
   } else if (mclass == "brmsfit") {
     out_df <- data.frame(matrix(nrow = length(model_list), ncol = 8)) # regression
-    names(out_df) <- c("N", "baseline", "predicted.corr", "Brier", "C", "WAIC",
+    names(out_df) <- c("N", "baseline", "predicted.corr", "Brier", "C", "LogScore", "WAIC",
                        "elpd_loo", "p_loo", "looic")
   } else if (mclass %in% c("ranger", "RandomForest", "randomForest")){
     out_df <- data.frame(matrix(nrow = length(model_list), ncol = 4)) # random forests
-    names(out_df) <- c("N", "baseline", "predicted.corr", "Brier", "C")
+    names(out_df) <- c("N", "baseline", "predicted.corr", "Brier", "C", "LogScore")
     if (is.na(out_df$Brier)) msg <- c(msg, "Brier scores only available for probability forests.\nInclude `probability = TRUE` in ranger().")
   } else stop(paste("I don't recognize this model class:", mclass))
 
