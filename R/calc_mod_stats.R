@@ -14,6 +14,7 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
     # calculate Brier, C index and Dxy
     brier_score <- mean((fits - y)^2)
     mean.rank <- mean(rank(fits)[y == 1])
+    log_score <- mean(abs(y*log(fits) + (1 - y) * log(1 - fits)))
     n <- length(y)
     n1 <- sum(y == 1)
     c.index <- (mean.rank - (n1 + 1)/2)/(n - n1)
@@ -30,6 +31,7 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
       predicted.corr = mean(preds == y),
       Brier = brier_score,
       C = c.index,
+      LogScore = log_score,
       AIC = aic,
       Max.VIF = maxVIF,
       kappa = kappa,
@@ -42,6 +44,7 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
     fits <- fitted(mod)
     preds <- ifelse(fits$Estimate > .5, 1, 0)
     brier_score <- mean((fits - y)^2)
+    log_score <- mean(abs(y*log(fits) + (1 - y) * log(1 - fits)))
     mean.rank <- mean(rank(fits)[y == 1])
     n <- length(y)
     n1 <- sum(y == 1)
@@ -57,6 +60,7 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
       predicted.corr = mean(preds == y),
       Brier = brier_score,
       C = c.index,
+      LogScore = log_score,
       WAIC = aic,
       elpd_loo = loo_estimates[1, 1],
       p_loo = loo_estimates[2, 1],
@@ -102,6 +106,7 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
       pred_correct = sum(diag(table(preds, y)))/length(y)
       msg <- paste("Predictions are for", predicted_class)
       brier_score <- mean((fits - y)^2)
+      log_score <- mean(abs(y*log(fits) + (1 - y) * log(1 - fits)))
     }
     # put the output into a vector
     # calculate C index and Dxy
@@ -114,9 +119,9 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
       baseline = max(table(y)/length(y)),
       predicted.corr = pred_correct,
       Brier = brier_score,
-      C = c.index)
-  } else if (mclass == "brmsfit") {
-
+      C = c.index,
+      LogScore = log_score
+      )
   } else stop(paste("I don't recognize this model class:", mclass))
   cat(msg, sep = "\n")
   return(output)
