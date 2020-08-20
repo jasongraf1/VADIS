@@ -24,25 +24,23 @@
 #'
 #' line1 <- vadis_line1(glm_list, path = FALSE)
 #' }
-vadis_line1 <- function(mod_list, path = NULL, method = c("freq", "pd", "rope", "map")){
+vadis_line1 <- function(mod_list, path = NULL, alpha = .05, method = c("freq", "pd", "rope", "map")){
 
   output_list <- vector("list")
-  raw_tab <- create_signif_table(mod_list, method = method)
+  raw_tab <- create_signif_table(mod_list, alpha = alpha, method = method)
   output_list[[1]] <- raw_tab
 
   dist_mat <- dist(t(raw_tab[-1,]), method = "euclidean")^2 # omit intercept
+
   output_list[[2]] <- dist_mat/nrow(raw_tab[-1,]) # normalize by number of constraints
 
   dist_mat2 <- (nrow(raw_tab[-1,]) - dist_mat)/nrow(raw_tab[-1,])
 
-  sim_tab <- dist_mat2 %>%
-    as.matrix() %>%
-    as.data.frame() %>%
-    rownames_to_column("variety") %>%
-    pivot_longer(-variety) %>%
-    group_by(name) %>%
-    dplyr::filter(value > 0) %>%
-    summarise(Similarity = mean(value, na.rm = T))
+  sim_dist <- as.matrix(dist_mat2)
+  diag(sim_dist) <- NA # remove diagonals before calculating means
+  means <- colMeans(sim_dist, na.rm = T)
+  sim_tab <- data.frame(Similarity = means)
+  rownames(sim_tab) <- names(mod_list)
 
   output_list[[3]] <- as.data.frame(sim_tab)
 
