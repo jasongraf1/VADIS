@@ -39,15 +39,12 @@ vadis_line3 <- function(mod_list, path = NULL, conditional = TRUE){
 
   output_list[[3]] <- as.dist(dist_mat)
 
-  sim_tab <- cor_mat %>%
-    as.data.frame() %>%
-    rownames_to_column("variety") %>%
-    pivot_longer(-variety) %>%
-    group_by(name) %>%
-    dplyr::filter(value < 1) %>%
-    summarise(Similarity = mean(value, na.rm = T))
+  diag(cor_mat) <- NA
+  means <- colMeans(cor_mat2, na.rm = T)
+  sim_tab <- data.frame(Similarity = means)
+  rownames(sim_tab) <- names(mod_list)
 
-  output_list[[4]] <- as.data.frame(sim_tab)
+  output_list[[4]] <- sim_tab
 
   names(output_list) <- c("varimp.table",
                           "rank.table",

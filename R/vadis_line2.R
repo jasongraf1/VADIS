@@ -40,15 +40,11 @@ vadis_line2 <- function(mod_list, path = NULL){
   output_list[[2]] <- dist_mat/maxD
 
   # Now normalize all distances to the maximum reasonable distance
-  sim_tab <- dist_mat %>%
-    as.matrix() %>%
-    as.data.frame() %>%
-    rownames_to_column("variety") %>%
-    pivot_longer(-variety) %>%
-    mutate(weighted = value/maxD) %>% # weight distances by maxD
-    group_by(name) %>%
-    dplyr::filter(value > 0) %>%      # ignore distances to self
-    summarise(Similarity = 1 - mean(weighted))
+  weighted_dist <- as.matrix(dist_mat/maxD)
+  diag(weighted_dist) <- NA # remove diagonals before calculating means
+  means <- colMeans(weighted_dist, na.rm = T)
+  sim_tab <- data.frame(Similarity = means)
+  rownames(sim_tab) <- names(mod_list)
 
   output_list[[3]] <- as.data.frame(sim_tab)
 
