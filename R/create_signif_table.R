@@ -20,7 +20,7 @@
 #'
 #' create_coef_table(rm_list)
 #' }
-create_signif_table <- function(mod_list, method = c("freq", "pd", "rope", "map")) {
+create_signif_table <- function(mod_list, alpha = .05, method = c("freq", "pd", "rope", "map")) {
   # identify the class of models
   type = class(mod_list[[1]])[1]
   if (type %in% c("lm", "glm", "merMod", "glmerMod")){
@@ -33,7 +33,7 @@ create_signif_table <- function(mod_list, method = c("freq", "pd", "rope", "map"
              sig <- bayestestR::p_rope(m) %>%
                as.data.frame() %>%
                mutate(
-                 significance = ifelse(p_ROPE < .025, 1, 0)
+                 significance = ifelse(p_ROPE < alpha/2, 1, 0)
                ) %>%
                pull(significance)
              names(sig) <- rownames(as.data.frame(summary(m)$fixed))
@@ -47,7 +47,7 @@ create_signif_table <- function(mod_list, method = c("freq", "pd", "rope", "map"
                  sig <- bayestestR::p_direction(m) %>%
                    as.data.frame() %>%
                    mutate(
-                     significance = ifelse(pd > .975, 1, 0)
+                     significance = ifelse(pd > (1 - alpha/2), 1, 0)
                    ) %>%
                    pull(significance)
                  names(sig) <- rownames(as.data.frame(summary(m)$fixed))
@@ -61,7 +61,7 @@ create_signif_table <- function(mod_list, method = c("freq", "pd", "rope", "map"
                  sig <- bayestestR::p_map(m) %>%
                    as.data.frame() %>%
                    mutate(
-                     significance = ifelse(p_MAP < .05, 1, 0)
+                     significance = ifelse(p_MAP < alpha, 1, 0)
                    ) %>%
                    pull(significance)
                  names(sig) <- rownames(as.data.frame(summary(m)$fixed))
