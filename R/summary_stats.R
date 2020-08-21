@@ -29,7 +29,6 @@ summary_stats <- function(model_list, data_list = NULL, response = NULL){
     out_df <- data.frame(matrix(nrow = length(model_list), ncol = 10)) # regression
     names(out_df) <- c("N", "baseline", "predicted.corr", "Brier",  "C", "LogScore", "AIC", "Max.VIF",
       "kappa", "HosLem.p")
-    if (is.na(out_df$kappa)) msg <- c(msg, "To calculate kappa scores include `x = TRUE` argument in glm()")
   } else if (mclass == "brmsfit") {
     out_df <- data.frame(matrix(nrow = length(model_list), ncol = 10)) # regression
     names(out_df) <- c("N", "baseline", "predicted.corr", "Brier", "C", "LogScore", "WAIC",
@@ -37,7 +36,6 @@ summary_stats <- function(model_list, data_list = NULL, response = NULL){
   } else if (mclass %in% c("ranger", "RandomForest", "randomForest")){
     out_df <- data.frame(matrix(nrow = length(model_list), ncol = 6)) # random forests
     names(out_df) <- c("N", "baseline", "predicted.corr", "Brier", "C", "LogScore")
-    if (is.na(out_df$Brier)) msg <- c(msg, "Brier scores only available for probability forests.\nInclude `probability = TRUE` in ranger().")
   } else stop(paste("I don't recognize this model class:", mclass))
 
   rownames(out_df) <- names(model_list) # add row names
@@ -47,7 +45,8 @@ summary_stats <- function(model_list, data_list = NULL, response = NULL){
     df <- data_list[[i]]
     out_df[i, ] <- calc_mod_stats(mod, df, response)
   }
-  cat(paste(msg, collapse = "\n"))
+  if (is.na(out_df$kappa)) cat("\nTo calculate kappa scores include `x = TRUE` argument in glm()")
+  if (is.na(out_df$Brier)) cat("\nBrier scores only available for probability forests.\nInclude `probability = TRUE` in ranger().")
   return(out_df)
 }
 
