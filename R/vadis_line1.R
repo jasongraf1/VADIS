@@ -2,12 +2,22 @@
 #'
 #' @param mod_list A list of regression model objects.
 #' @param path Path in which to save the output as an R data file (\code{.rds}). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.
+#' @param alpha The significance threshold. Default is .05
+#' @param method The method for calculating significance values. See details.
 #'
 #' @author Jason Grafmiller
 #'
-#' @details The function loops through a list of model objects, extracts the coefficient estimates, and compiles them in a single dataframe.
+#' @details The function loops through a list of model objects, extracts the coefficient estimates, and compiles them in a single dataframe. There are four possible values for the \code{method} argument: \code{"freq"}, \code{"pd"}, \code{"rope"}, \code{"map"}. For frequentist (non-Bayesian) models, only the standard outputs of \code{glm} and \code{glmer} are used, i.e. \code{method = "freq"}.
+#'
+#' For Bayesian models, all four methods are available. For \code{method = "freq"}, significance is determined based on the Highest Posterior Density Interval (HDI), which is determined as 1 - \code{alpha}. Significance is defined as whether the HDI contains 0. For \code{method = "pd"} ("probability of direction"), the p-value is defined as the proportion of the posterior distribution that is of the median’s sign. In other words, the p-value represents the proportion of the posterior distribution that is above/below 0, whichever is larger). For \code{method = "rope"}, the p-value is defined as the proportion of the entire posterior distribution that lies within the Region of Practical Equivalence (ROPE), which is defined here as \code{c(-0.1, 0.1)} (see Kruschke \& Liddell 2018; Makowski et al. 2019). For \code{method = "map"}, the p-value is defined as the density value at 0 divided by the density at the Maximum A Posteriori (MAP). See \code{\link[bayestestR]{p_direction}}, \code{\link[bayestestR]{p_rope}}, and \code{\link[bayestestR]{p_map}} for further details.
 #'
 #' @return A list of length 3.
+#'
+#' @references
+#'
+#' Kruschke, John K. & Torrin M. Liddell. 2018. The Bayesian New Statistics: Hypothesis testing, estimation, meta-analysis, and power analysis from a Bayesian perspective. \emph{Psychonomic Bulletin & Review} 25(1). 178–206. doi: 10.3758/s13423-016-1221-4.
+#'
+#' Makowski, Dominique, Mattan S. Ben-Shachar, S. H. Annabel Chen & Daniel Lüdecke. 2019. Indices of effect existence and significance in the Bayesian framework. \emph{Frontiers in Psychology}. 10. doi: 10.3389/fpsyg.2019.02767.
 #'
 #' @export
 #'
