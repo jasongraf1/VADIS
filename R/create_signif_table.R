@@ -2,7 +2,7 @@
 #'
 #' @param mod_list A list of regression model objects.
 #' @param path Path in which to save the output (as \code{.csv} file). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.
-#' @param method string indicating which method to use for assessing significance from Bayesian models.
+#' @param method string indicating which method to use for assessing significance from Bayesian models. See \code{\link[VADIS]{vadis_line1}} for details.
 #'
 #' @author Jason Grafmiller
 #'
@@ -72,11 +72,16 @@ create_signif_table <- function(mod_list, alpha = .05, method = c("freq", "pd", 
       sig_coef_tab <- as.data.frame(
         lapply(mod_list,
         FUN = function(m){
-          fixed <- as.data.frame(summary(m)$fixed)
+          fixed <- posterior_interval(
+            m,
+            prob = 1 - alpha,
+            pars = rownames(summary(m)$fixed)
+            )
+          fixed
           sig <- rep(0, nrow(fixed))
-          sig[fixed$`l-95% CI` > 0 & fixed$`u-95% CI` > 0] <- 1
-          sig[fixed$`l-95% CI` < 0 & fixed$`u-95% CI` < 0] <- 1
-          names(sig) <- rownames(fixed)
+          sig[fixed[, 1] > 0 & fixed[, 2] > 0] <- 1
+          sig[fixed[, 1] < 0 & fixed[, 2] < 0] <- 1
+          names(sig) <- rownames(summary(m)$fixed)
           return(sig)
         }))
     }
