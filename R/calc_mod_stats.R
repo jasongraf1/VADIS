@@ -37,7 +37,7 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
       kappa = kappa,
       hoslem.p = round(hoslem, 3))
     resp <- data[, response]
-    msg <- paste("Predictions are for", levels(resp)[2])
+    # msg <- paste("Predictions are for", levels(resp)[2])
   } else if (mclass == "brmsfit") {
     resp <- data[, response]
     y <- as.numeric(resp) - 1
@@ -88,7 +88,7 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
         ## probabilities for each response class
         fits <- preds[, 2] ## second column in matrix
         predicted_class <- colnames(preds)[2]
-        msg <- paste("Predictions are for", predicted_class)
+        # msg <- paste("Predictions are for", predicted_class)
         preds <- ifelse(fits > .5, 1, 0)
         pred_correct <- sum(diag(table(preds, y)))/length(y)
         brier_score <- mod$prediction.error
@@ -99,12 +99,14 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
       fits <- as.numeric(preds) - 1
       brier_score <- NA
     } else if(mclass == "RandomForest"){
-      trp <- treeresponse(mod)
-      predicted_class <- colnames(trp)[2]
-      fits <- sapply(trp, FUN = function(x) x[2])
+      resp <- mod@responses@variables
+      y <- as.numeric(resp$Response) - 1
+      probs <- do.call("rbind", mod@predict_response(type = "prob"))
+      # predicted_class <- colnames(trp)[2]
+      fits <- sapply(probs, FUN = function(x) x[2])
       preds <- ifelse(fits > .5, 1, 0)
       pred_correct = sum(diag(table(preds, y)))/length(y)
-      msg <- paste("Predictions are for", predicted_class)
+      # msg <- paste("Predictions are for", predicted_class)
       brier_score <- mean((fits - y)^2)
       log_score <- mean(abs(y*log(fits) + (1 - y) * log(1 - fits)))
     }
@@ -123,6 +125,6 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
       LogScore = log_score
       )
   } else stop(paste("I don't recognize this model class:", mclass))
-  cat(msg, sep = "\n")
+  # cat(msg, sep = "\n")
   return(output)
 }
