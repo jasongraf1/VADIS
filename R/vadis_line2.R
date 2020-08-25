@@ -43,7 +43,7 @@ vadis_line2 <- function(mod_list, path = NULL){
   weighted_dist <- as.matrix(dist_mat/maxD)
   diag(weighted_dist) <- NA # remove diagonals before calculating means
   means <- colMeans(weighted_dist, na.rm = T)
-  sim_tab <- data.frame(Similarity = means)
+  sim_tab <- data.frame(Similarity = 1 - means)
   rownames(sim_tab) <- names(mod_list)
 
   output_list[[3]] <- as.data.frame(sim_tab)
