@@ -24,28 +24,38 @@
 #'
 #' line2 <- vadis_line2(glm_list, path = FALSE)
 #' }
-vadis_line2 <- function(mod_list, path = NULL){
+vadis_line2 <- function(mod_list, path = NULL, scale = c("abs", "minmax")){
   output_list <- vector("list")
   raw_tab <- create_coef_table(mod_list) # call function to create varimp rankings
   output_list[[1]] <- raw_tab
 
   dist_mat <- dist(t(raw_tab[-1,]), method = "euclidean") # leave out the intercept
 
-  # get the maximum reasonable distance
-  dmy <- data.frame(a = sample(c(1,-1), size = nrow(raw_tab[-1,]), replace = T))
-  dmy$b <- -dmy$a # exact opposite of a
-  maxD <- max(dist(t(dmy), "euclidean"))
+  if (match.arg(scale) == "abs"){
+    # get the maximum reasonable distance
+    dmy <- data.frame(a = sample(c(1,-1), size = nrow(raw_tab[-1,]), replace = T))
+    dmy$b <- -dmy$a # exact opposite of a
+    maxD <- max(dist(t(dmy), "euclidean"))
+    out_dist <- dist_mat/maxD
+
+    # Now normalize all distances to the maximum reasonable distance
+    weighted_dist <- as.matrix(out_dist)
+    diag(weighted_dist) <- NA # remove diagonals before calculating means
+    means <- colMeans(weighted_dist, na.rm = T)
+    sim_tab <- data.frame(Similarity = 1 - means)
+    rownames(sim_tab) <- names(mod_list)
+  } else if (match.arg(scale) == "minmax"){
+    out_dist <- minmax(dist_mat)
+
+    weighted_dist <- as.matrix(out_dist)
+    diag(weighted_dist) <- NA # remove diagonals before calculating means
+    means <- colMeans(weighted_dist, na.rm = T)
+    sim_tab <- data.frame(Similarity = 1 - means)
+    rownames(sim_tab) <- names(mod_list)
+  }
 
   # save normalized distances to output
-  output_list[[2]] <- dist_mat/maxD
-
-  # Now normalize all distances to the maximum reasonable distance
-  weighted_dist <- as.matrix(dist_mat/maxD)
-  diag(weighted_dist) <- NA # remove diagonals before calculating means
-  means <- colMeans(weighted_dist, na.rm = T)
-  sim_tab <- data.frame(Similarity = 1 - means)
-  rownames(sim_tab) <- names(mod_list)
-
+  output_list[[2]] <- out_dist
   output_list[[3]] <- as.data.frame(sim_tab)
 
   names(output_list) <- c("coef.table", "distance.matrix", "similarity.scores")
