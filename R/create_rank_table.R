@@ -37,7 +37,7 @@ create_rank_table <- function(mod_list, conditional = TRUE) {
   } else if (type[1] == "RandomForest"){
     if (conditional){
       cat(paste("Computing conditional variable importance for", length(mod_list), "models. This may take some time...\nIf it takes too long, consider setting `conditional = FALSE`."))
-    } else cat(paste("Computing varimpAUC() for", length(mod_list), "models. This may take some time..."))
+    } else cat(paste("Computing variable importance for", length(mod_list), "models. This may take some time..."))
     varimp_list <- lapply(
       mod_list,
       FUN = function(m) {
