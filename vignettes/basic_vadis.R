@@ -1,4 +1,4 @@
-## ----setup, include = FALSE----------------------------------------------
+## ----setup, include = FALSE---------------------------------------------------
 library(knitr)
 knitr::opts_chunk$set(
   collapse = TRUE,
@@ -10,39 +10,39 @@ knitr::opts_knit$set(
   root.dir = normalizePath('../'), # set working directory as root
   cache.path = "vignettes/basic_vadis_cache/") 
 
-## ----libs, comment=F, message=FALSE, error=FALSE-------------------------
+## ----libs, comment=F, message=FALSE, error=FALSE------------------------------
 library(tidyverse) # for data wrangling
 library(lme4) # for regression models
 library(party) # for random forests
+library(permimp) # for conditional permutation importance
 library(phangorn) # for neighborNets
 
-## ----eval = F------------------------------------------------------------
+## ----eval = F-----------------------------------------------------------------
 #  devtools::install_github("jasongraf1/VADIS")
-#  library(VADIS)
 
-## ----echo = F------------------------------------------------------------
+## -----------------------------------------------------------------------------
 library(VADIS)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # call the dataset 
 pv <- particle_verbs_short
 names(pv)
 
-## ----fig.height = 4, fig.width=6-----------------------------------------
+## ----fig.height = 4, fig.width=6----------------------------------------------
 ggplot(pv, aes(Variety, fill = Response)) +
   geom_bar(position = "dodge")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # create list of dataframes
 data_list <- split(pv, pv$Variety, drop = TRUE) # drop unused levels
 names(data_list)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 f1 <- Response ~ DirObjWordLength + DirObjDefiniteness + DirObjGivenness + 
   DirObjConcreteness + DirObjThematicity + DirectionalPP + PrimeType + 
   Semantics + Surprisal.P + Surprisal.V + Register
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 glm_list <- vector("list") # empty list to store our models 
 for (i in seq_along(data_list)){
   d <- data_list[[i]]
@@ -53,12 +53,12 @@ for (i in seq_along(data_list)){
 }
 names(glm_list) <- names(data_list) # add names to the list of models
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # update formula with by-verb and by-particle random intercepts 
 f2 <- update(f1, .~ (1|Verb) + (1|Particle) + .)
 f2
 
-## ----eval = F------------------------------------------------------------
+## ----eval = F-----------------------------------------------------------------
 #  glmer_list <- vector("list")
 #  for (i in seq_along(data_list)){
 #    d <- data_list[[i]]
@@ -72,25 +72,25 @@ f2
 #  }
 #  names(glmer_list) <- names(data_list)
 
-## ------------------------------------------------------------------------
+## ----warning = F--------------------------------------------------------------
 summary_stats(glm_list) %>% 
   round(3)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 signif_line <- vadis_line1(glm_list, path = FALSE)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 signif_line$signif.table
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 signif_line$distance.matrix %>% 
   round(3)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 signif_line$similarity.scores %>% 
   arrange(desc(Similarity)) # sort by similarity
 
-## ----eval = F------------------------------------------------------------
+## ----eval = F-----------------------------------------------------------------
 #  write.csv(signif_line$signif.table,
 #            file = "line1_significance_table.csv")
 #  
@@ -100,29 +100,33 @@ signif_line$similarity.scores %>%
 #  write.csv(signif_line$similarity.scores,
 #            file = "line1_similarity_scores.csv")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 coef_line <- vadis_line2(glm_list, path = FALSE)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 coef_line$coef.table %>% 
   round(3)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 coef_line$distance.matrix %>% 
   round(3)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 coef_line$similarity.scores %>% 
   arrange(desc(Similarity))
 
-## ----echo=F, eval = T----------------------------------------------------
+## ----echo=F, eval = T---------------------------------------------------------
 d <- data.frame(
   A = rep(c(-1,1), each = 5),
   B = rep(c(1,-1), each = 5),
   row.names = paste0("constraint.", 1:10))
 d
 
-## ----crf_list------------------------------------------------------------
+## ----eval = F-----------------------------------------------------------------
+#  vadis_line2(glm_list, weight = 2, path = FALSE)$distance.matrix %>%
+#    round(3)
+
+## ----crf_list-----------------------------------------------------------------
 crf_list <- vector("list") # empty list to store our models
 for (i in seq_along(data_list)){
   d <- data_list[[i]]
@@ -131,69 +135,78 @@ for (i in seq_along(data_list)){
 }
 names(crf_list) <- names(data_list)
 
-## ----crf_list2, cache = F, eval = F--------------------------------------
+## ----crf_list2, cache = F, eval = F-------------------------------------------
 #  crf_list <- lapply(data_list,
 #    FUN = function(d) cforest(f1, d, controls = cforest_unbiased(ntree = 500, mtry = 3)))
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 summary_stats(crf_list, data_list, response = "Response") %>% 
   round(3)
 
-## ----line3, cache=F------------------------------------------------------
+## ----line3, cache=F-----------------------------------------------------------
 varimp_line <- vadis_line3(crf_list, path = FALSE, conditional = FALSE)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
+varimp_line$varimp.table %>% 
+  round(3)
+
+## -----------------------------------------------------------------------------
+varimp_line$rank.table
+
+## -----------------------------------------------------------------------------
 varimp_line$distance.matrix %>% 
   round(3)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 varimp_line$similarity.scores %>% 
   arrange(desc(Similarity))
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 mean_sims <- data.frame(
-  line1 = signif_line$similarity.scores[,2], # get only the values in the 2nd column
-  line2 = coef_line$similarity.scores[,2],
-  line3 = varimp_line$similarity.scores[,2],
+  line1 = signif_line$similarity.scores[,1], # get only the values in the 2nd column
+  line2 = coef_line$similarity.scores[,1],
+  line3 = varimp_line$similarity.scores[,1],
   row.names = names(data_list)
 )
 mean_sims$mean <- rowMeans(mean_sims)
 round(mean_sims, 3)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 mean(mean_sims$mean)
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 fused_dist <- analogue::fuse(signif_line$distance.matrix, 
                              coef_line$distance.matrix, 
                              varimp_line$distance.matrix)
 round(fused_dist, 3)
 
-## ----hclustplot, fig.height=6, fig.width=7-------------------------------
+## ----hclustplot, fig.height=6, fig.width=7------------------------------------
 # Use the 2nd line of evidence
 line2_clust <- hclust(coef_line$distance.matrix, method = "ward.D2")
 plot(line2_clust, main = "Hierarchical clustering of line 2 distances")
 
-## ----fig.height=6, fig.width=7-------------------------------------------
+## ----fig.height=6, fig.width=7------------------------------------------------
 hclust(fused_dist, method = "ward.D2") %>% 
   plot(main = "Hierarchical clustering of fused distances")
 
-## ----fig.height=6, fig.width=7-------------------------------------------
+## ----fig.height=6, fig.width=8, caption = "Clustering methods for Line 2 distances"----
+par(mfrow = c(1,2))
 cluster::diana(coef_line$distance.matrix) %>% 
-  cluster::pltree(main = "Divisive clustering of line 2 distances")
-
-## ----fig.height=6, fig.width=7-------------------------------------------
+  cluster::pltree(main = "Divisive clustering")
 ape::nj(coef_line$distance.matrix) %>% 
-  plot(type = "u", main = "unrooted clustering of line 2 distances")
+  plot(type = "u", main = "Unrooted clustering")
 
-## ----fig.height=6, fig.width=7-------------------------------------------
+## ----fig.height=6, fig.width=8, caption = "Clustering methods for fused distances from all three Lines"----
+par(mfrow = c(1,2))
+cluster::diana(fused_dist) %>% 
+  cluster::pltree(main = "Divisive clustering")
 ape::nj(fused_dist) %>% 
-  plot(type = "u", main = "unrooted clustering of fused distances")
+  plot(type = "u", main = "Unrooted clustering")
 
-## ------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 line2_mds <- cmdscale(coef_line$distance.matrix, k = 3, eig = T) 
 
-## ----mdsplot, fig.height=6, fig.width=7----------------------------------
+## ----mdsplot, fig.height=6, fig.width=7---------------------------------------
 line2_mds[[1]] %>%
   as.data.frame() %>% 
   mutate(genres = rownames(.)) %>% 
@@ -201,7 +214,7 @@ line2_mds[[1]] %>%
   geom_point() +
   geom_text(nudge_y = .01, size = 4)
 
-## ----fig.height=6, fig.width=7-------------------------------------------
+## ----fig.height=6, fig.width=7------------------------------------------------
 dd <- line2_mds[[1]] %>%
   as.data.frame() 
 library(scatterplot3d)
@@ -211,10 +224,10 @@ with(dd, {
   text(scttr_coords$x, scttr_coords$y, labels = rownames(dd), pos = 3)
   })
 
-## ----fig.height=6, fig.width=7-------------------------------------------
+## ----fig.height=6, fig.width=7, caption = "3D plot of Line 2 based MDS"-------
 library(plotly)
 dd %>% 
-  mutate(Variety = rownames(.)) %>% 
+  rownames_to_column("Variety") %>% 
   plot_ly() %>%
   add_trace(x = ~V1, y = ~V2, z = ~V3,
             type = "scatter3d", inherit = F,
@@ -226,13 +239,12 @@ dd %>%
            mode = "markers",
            showlegend = FALSE)
 
-## ------------------------------------------------------------------------
+## ----fig.height=6, fig.width=7, caption = "3D plot of fused distances MDS"----
 fused_mds <- cmdscale(fused_dist, k = 3, eig = T)
 
-## ----fig.height=6, fig.width=7-------------------------------------------
 fused_mds[[1]] %>% # extract the coordinates
   as.data.frame() %>% 
-  mutate(Variety = rownames(.)) %>% 
+  rownames_to_column("Variety") %>%
   plot_ly() %>%
   add_trace(x = ~V1, y = ~V2, z = ~V3,
             type = "scatter3d", inherit = F,
@@ -244,11 +256,11 @@ fused_mds[[1]] %>% # extract the coordinates
            mode = "markers",
            showlegend = FALSE)
 
-## ----NNetplot, fig.height=6, fig.width=7---------------------------------
+## ----NNetplot, fig.height=6, fig.width=7--------------------------------------
 line2_NNet <- phangorn::neighborNet(coef_line$distance.matrix)
 plot(line2_NNet, "2D")
 
-## ----NNetplot2, fig.height=6, fig.width=7--------------------------------
+## ----NNetplot2, fig.height=6, fig.width=7-------------------------------------
 phangorn::neighborNet(fused_dist) %>% 
   plot("2D")
 

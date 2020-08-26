@@ -8,7 +8,7 @@ output:
     fig_caption: yes
     css: pandoc.css
 vignette: >
-  %\VignetteIndexEntry{Basic application of VADIS method}
+  %\VignetteIndexEntry{Introduction to the VADIS method}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 bibliography: vadis_refs.bib
@@ -35,17 +35,17 @@ The basic libraries you'll need for this vignette.
 library(tidyverse) # for data wrangling
 library(lme4) # for regression models
 library(party) # for random forests
+library(permimp) # for conditional permutation importance
 library(phangorn) # for neighborNets
 ```
 
-Install and load the `VADIS` package.
+Install from GitHub and load the `VADIS` package.
 
 ```{r eval = F}
 devtools::install_github("jasongraf1/VADIS")
-library(VADIS)
 ```
 
-```{r echo = F}
+```{r}
 library(VADIS)
 ```
 
@@ -64,7 +64,7 @@ pv <- particle_verbs_short
 names(pv)
 ```
 
-This dataset contains approximately 11000 tokens from nine different varities of English from around the world. 
+This dataset contains approximately 11000 tokens from nine different varieties of English from around the world. 
 
 ```{r fig.height = 4, fig.width=6}
 ggplot(pv, aes(Variety, fill = Response)) +
@@ -81,7 +81,7 @@ The method takes inspiration from comparative sociolinguistics [see e.g. @Taglia
 
 1. Are the same constraints significant across varieties? 
 2. Do the constraints have the same strength across varieties? 
-3. Is the constraint hierarchy similar?
+3. Is the relative explanatory importance of the constraints similar?
 
 Below we'll go through the steps for calculating and assessing each of these lines of evidence. 
 
@@ -167,7 +167,7 @@ names(glmer_list) <- names(data_list)
 
 Before moving on, we should check that the models fit the data well, and that we don't have any issues with collinearity or other signs of trouble. The `summary_stats()` function gives a number of statistics to consider.
 
-```{r}
+```{r warning = F}
 summary_stats(glm_list) %>% 
   round(3)
 ```
@@ -177,7 +177,9 @@ These are:
 - `N`: the total number of observations
 - `baseline`: the baseline accuracy, i.e. the proportion of the most frequent response
 - `predicted.corr`: the proportion of observations predicted correctly
+- `Brier`: the Brier score measuring the mean squared difference between the observed outcome and the predicted probability of each possible outcome for item *i*. Scores range from 0 (perfect prediction) to 1.
 - `C`: the concordance index *C*, a.k.a. as the area under the receiver operating characteristic (ROC) curve. Values below .8 suggest poor model discrimination
+- `LogScore`: the log score (log loss). Values closer to 0 reflect better prediction
 - `AIC`: the model's Akaike Information Criterion
 - `Max.VIF`: the maximum variance inflation factor for the model's parameter estimates. Values above 10 suggest potentially troublesome collinearity among predictors
 - `kappa`: the condition number indicating overall data multicollinearity. Values < 6 indicate no collinearity; ~15 indicate medium collinearity; > 30 indicate a worrysome degree of collinearity [@Baayen2008, 198-200].
@@ -264,9 +266,9 @@ Note that both `vadis_line1()` and `vadis_line2()` work the same with `glm` and 
 
 ### Calculating maximum distance in line 2
 
-In order to appropriately calculate line 2, we need to determine a maximum distance measure with which to normalize the pairwise distances. We define this distance based on what we know about the range of possible values the data is likely to have. We use the distance between two hypothetical varieties whose constraints have exactly the opposite effects. Such cases of constraint "flipping", i.e. a systematic reversal in the direction of constraint effects between two varieties, are very unlikely to happen in real world contexts, which is exactly the point. We additionally set the absolute size of all the constraints to a reasonable value to get two (hypothetical) varieties that are about as different from one another as we could expect any two varieties to be. We are really, really unlikely to come across a real world situation where two varieties’ grammars are more dissimilar than this.
+In order to appropriately calculate line 2, we need to determine a maximum distance measure with which to normalize the pairwise distances. We define this distance based on what we know about the range of possible values the data is likely to have. We use the distance between two hypothetical varieties whose constraints have exactly the opposite effects (in the defaul case, 1 and -1 on the logit scale). Such cases of constraint "flipping", i.e. a systematic reversal in the direction of constraint effects between two varieties, are very unlikely to happen in real world contexts, which is exactly the point. We additionally set the absolute size of all the constraints to a reasonable value to get two (hypothetical) varieties that are about as different from one another as we could expect any two related language varieties to be. We hypothesize we are unlikely to come across a real world situation where the variable grammars of two varieties are more dissimilar than this. 
 
-For a comparison of grammars with *n* constraints, we define the maximum reasonable distance by taking the distance between two hypothetical varieties whose constraints all have an absolute effect size of ±1 but whose effect directions are the opposite of one another in the respective varieties. For example, in a study comparing grammars with 10 constraints, we calculate the maximum reasonable distance by taking the euclidean distance between hypothetical varieties A and B that look like so.
+For a comparison of grammars with *N* constraints, we define the maximum reasonable distance by taking the distance between two hypothetical varieties whose constraints all have an absolute effect size of ±1 but whose effect directions are the opposite of one another. For example, in a study of a variable grammar with 10 constraints, we define the maximum reasonable distance as thee euclidean distance between two hypothetical varieties A and B that look like so.
 
 ```{r echo=F, eval = T}
 d <- data.frame(
@@ -276,16 +278,23 @@ d <- data.frame(
 d
 ```
 
-The maximum distance in this case is therefore d(A,B) = `r round(as.numeric(dist(t(d), "euclidean")), 2)`. To normalize our distance matrices we then divide the observed distances by this value to give distances within a range of 0 to 1. For the similarity scores we simply subtract the distances from 1 to give us a score where larger values represent greater average similarity.
+The maximum distance in this case is d(A,B) = `r round(as.numeric(dist(t(d), "euclidean")), 2)`. To normalize our distance matrix we then divide the observed distances by this value to give distances within a range of 0 to 1. For the similarity scores we simply subtract the distances from 1 to give us a score where larger values represent greater average similarity.
 
-We chose ±1 as the value for our hypothetical constraints since a change from -1 to 1 on the log odds scale represents an increase in probability of approximately 50 percentage points: *P* = logit^-1^(-1) = 0.27; *P* = logit^-1^(1) = 0.73. It seems very unlikely that we'd ever see such a big reversal in *every* constraint's effect between two related varieties. Note that these values assume that inputs are standardized according to the procedure described in @Gelman2008. 
+We chose ±1 as the default value for our hypothetical constraints since a change from -1 to 1 on the log odds scale represents an increase in probability of approximately 50 percentage points: *p* = logit^-1^(-1) = 0.27; *p* = logit^-1^(1) = 0.73. It seems very unlikely that we'd ever see such a strong reversal in the effect of *every* constraint between two related varieties. Note that these values assume that inputs are standardized according to the procedure described in @Gelman2008. Nevertheless, if desired, the effect size used to calculate the weighting can be adjusted by setting the `weight` argument in the `vadis_line2()` function.
+
+```{r eval = F}
+vadis_line2(glm_list, weight = 2, path = FALSE)$distance.matrix %>% 
+  round(3)
+```
+
+With `weight = 2` the absolute distances are now half what they were before, but the relative distances have not changed (this also means that higher weights will push similarity scores closer to 1).
 
 
 ## Step 5
 
-In this step we calculate the conditional random forest models of each dataset. From these we'll then calculate variable importance rankings which comprise the third line of evidence. 
+In this step we calculate the conditional random forest models of each dataset. From these we'll then calculate variable importance rankings which comprise the third line of evidence. We recommend either the `party` or `ranger` packages for fitting random forests. Note that for `ranger` forests, the `importance` argument must be specified in the model fitting function.
 
-Now we loop over the datasets in `data_list` and apply the modeling function just like we did with the regression models. In this tutorial we'll use the `cforest()` function in the `party` package, but the `VADIS` package also supports random forests generated with `ranger`. **NOTE**: The `controls` options below are just the defaults. You will need to adapt these to suit your needs for a given dataset 
+Now we loop over the datasets in `data_list` and apply the modeling function just like we did with the regression models. In this tutorial we'll use the `cforest()` function in the `party` package, but the `VADIS` package also supports random forests generated with `ranger`. **NOTE**: The `controls` options below are just the defaults. You will need to adapt these to suit your needs for a given dataset.
 
 ```{r crf_list}
 crf_list <- vector("list") # empty list to store our models
@@ -306,31 +315,46 @@ crf_list <- lapply(data_list,
   FUN = function(d) cforest(f1, d, controls = cforest_unbiased(ntree = 500, mtry = 3)))
 ```
 
-**WARNING**: Random forest objects can take a long time to run, and the resulting objects can be quite large, especially those generated with `party` (e.g. the `crf_list` above is 559 Mb in size. With 1000 trees it doubles to 1.1 Gb). Processing many forests with large numbers of trees can tax your CPU and RAM and slow down R's functioning. It's recommended that you save these objects to a file to be called as needed.
+**WARNING**: Random forest objects can take a long time to run, and the resulting objects can be quite large, especially those generated with `party` (e.g. the `crf_list` above is 559 Mb in size. With 1000 trees it doubles to 1.1 Gb). Processing many forests with large numbers of trees can tax your CPU and RAM and slow down R's functioning. It's recommended that you save these objects to a file to be called as needed. 
 
 ### Checking fits
 
-Before moving on, we should again check that the models fit the data well, and that we don't have any issues with collinearity or other signs of trouble. The `summary_stats()` function gives a subset of the statistics we saw before, mainly because random forest models don't provide us with these statistics. Additional arguments are also needed since the model objects don't contain the necessary information.
+Before moving on, we should again check that the models fit the data well, and that we don't have any issues with collinearity or other signs of trouble. The `summary_stats()` function gives a subset of the statistics we saw before, mainly because random forest models don't provide us with these statistics. Additional arguments are also needed since model objects from some packages don't contain the necessary information.
 
 ```{r}
 summary_stats(crf_list, data_list, response = "Response") %>% 
   round(3)
 ```
-
+This may also take some time with `party` models...
 
 ## Step 6
 
-In this next step we look at the third line of evidence. We do this with the `vadis_line3()` function. This function also returns a list with, you guessed it, three elements.
+In this next step we look at the third line of evidence. We do this with the `vadis_line3()` function. This function also returns a list with 4 elements.
 
-- `rank.table`: A table of variable importance rankings.
+- `varimp.table`: A table of the variable importance measures returned by the forest model.
+- `rank.table`: A table of the variable importances converted to rankings, i.e. 1, 2, 3, ..., *n* for the first, second, third, etc.  most importance predictors.
 - `distance.matrix`: A distance matrix based on `rank.table`. For this function distances are measured by calculating the pairwise Spearman rank correlation coefficients and subtracting from 1.
 - `similarity.scores`: A table of mean similarity coeficients measured for each variety. These are equivalent to the Spearman rank correlations.
 
-We then loop over the list of random forests and calculate the variable importance rankings. For `party` forests we use the `varimpAUC()` function, while `ranger` forests use the "permutation" method. With `party` forests we can also specify whether the rankings should be based on conditional importance scores, which are advised when there are many potentially correlated predictors [@Strobl2008]. Since conditional importance takes *much* longer to compute, we'll set it to `FALSE` (the default) here.
+We then loop over the list of random forests and calculate the variable importance rankings. For `party` forests we use the AUC based permutation importance, calculated with the `permimp()` function from the `permimp` package (with `AUC = TRUE`). With `party` forests we can also specify whether the rankings should be based on conditional importance scores, which are advised when there are many potentially correlated predictors [@Strobl2008]. Since conditional importance can take *much* longer to compute, we'll set it to `FALSE` (the default) here.
 
 ```{r line3, cache=F}
 varimp_line <- vadis_line3(crf_list, path = FALSE, conditional = FALSE)
 ```
+
+Look at the variable importance table.
+
+```{r}
+varimp_line$varimp.table %>% 
+  round(3)
+```
+
+Now the importances as rankings. This makes it easier to compare varieties.
+
+```{r}
+varimp_line$rank.table
+```
+
 
 ```{r}
 varimp_line$distance.matrix %>% 
@@ -351,9 +375,9 @@ We can merge the similarity scores across the three lines of evidence, and arriv
 
 ```{r}
 mean_sims <- data.frame(
-  line1 = signif_line$similarity.scores[,2], # get only the values in the 2nd column
-  line2 = coef_line$similarity.scores[,2],
-  line3 = varimp_line$similarity.scores[,2],
+  line1 = signif_line$similarity.scores[,1], # get only the values in the 2nd column
+  line2 = coef_line$similarity.scores[,1],
+  line3 = varimp_line$similarity.scores[,1],
   row.names = names(data_list)
 )
 mean_sims$mean <- rowMeans(mean_sims)
@@ -399,21 +423,23 @@ hclust(fused_dist, method = "ward.D2") %>%
 ```
 
 
-Other methods use divisive clustering (with `cluster::diana()`) or unrooted trees with neighbor joining methods (with `ape::nj()`).
+Other methods use divisive clustering (with `cluster::diana()`) or unrooted trees with neighbor joining methods (with `ape::nj()`). For example, the Line 2 distances cluster like so.
 
-```{r fig.height=6, fig.width=7}
+```{r fig.height=6, fig.width=8, caption = "Clustering methods for Line 2 distances"}
+par(mfrow = c(1,2))
 cluster::diana(coef_line$distance.matrix) %>% 
-  cluster::pltree(main = "Divisive clustering of line 2 distances")
-```
-
-```{r fig.height=6, fig.width=7}
+  cluster::pltree(main = "Divisive clustering")
 ape::nj(coef_line$distance.matrix) %>% 
-  plot(type = "u", main = "unrooted clustering of line 2 distances")
+  plot(type = "u", main = "Unrooted clustering")
 ```
+The three Lines together give a slightly different picture.
 
-```{r fig.height=6, fig.width=7}
+```{r fig.height=6, fig.width=8, caption = "Clustering methods for fused distances from all three Lines"}
+par(mfrow = c(1,2))
+cluster::diana(fused_dist) %>% 
+  cluster::pltree(main = "Divisive clustering")
 ape::nj(fused_dist) %>% 
-  plot(type = "u", main = "unrooted clustering of fused distances")
+  plot(type = "u", main = "Unrooted clustering")
 ```
 
 
@@ -448,12 +474,12 @@ with(dd, {
   })
 ```
 
-`plotly` is another powerful package for generating all kinds of interactive graphics. 
+The `{plotly}` package is very nice for generating all kinds of interactive graphics. 
 
-```{r fig.height=6, fig.width=7}
+```{r fig.height=6, fig.width=7, caption = "3D plot of Line 2 based MDS"}
 library(plotly)
 dd %>% 
-  mutate(Variety = rownames(.)) %>% 
+  rownames_to_column("Variety") %>% 
   plot_ly() %>%
   add_trace(x = ~V1, y = ~V2, z = ~V3,
             type = "scatter3d", inherit = F,
@@ -466,11 +492,7 @@ dd %>%
            showlegend = FALSE)
 ```
 
-We can also run and MDS based on the fused distance matrix.
-
-```{r}
-fused_mds <- cmdscale(fused_dist, k = 3, eig = T)
-```
+We can also run an MDS based on the fused distance matrix.
 
 <!-- We can use a scree plot to see how many dimensions we might want to plot. -->
 
@@ -478,10 +500,12 @@ fused_mds <- cmdscale(fused_dist, k = 3, eig = T)
 <!-- barplot(fused_mds$eig) -->
 <!-- ``` -->
 
-```{r fig.height=6, fig.width=7}
+```{r fig.height=6, fig.width=7, caption = "3D plot of fused distances MDS"}
+fused_mds <- cmdscale(fused_dist, k = 3, eig = T)
+
 fused_mds[[1]] %>% # extract the coordinates
   as.data.frame() %>% 
-  mutate(Variety = rownames(.)) %>% 
+  rownames_to_column("Variety") %>%
   plot_ly() %>%
   add_trace(x = ~V1, y = ~V2, z = ~V3,
             type = "scatter3d", inherit = F,
