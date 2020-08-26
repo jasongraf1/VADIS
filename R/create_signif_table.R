@@ -72,7 +72,7 @@ create_signif_table <- function(mod_list, alpha = .05, method = c("freq", "pd", 
       sig_coef_tab <- as.data.frame(
         lapply(mod_list,
         FUN = function(m){
-          fixed <- posterior_interval(
+          fixed <- brms::posterior_interval(
             m,
             prob = 1 - alpha,
             pars = rownames(summary(m)$fixed)
