@@ -103,7 +103,7 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
       y <- as.numeric(resp$Response) - 1
       probs <- do.call("rbind", mod@predict_response(type = "prob"))
       # predicted_class <- colnames(trp)[2]
-      fits <- sapply(probs, FUN = function(x) x[2])
+      fits <- probs[,2]
       preds <- ifelse(fits > .5, 1, 0)
       pred_correct = sum(diag(table(preds, y)))/length(y)
       # msg <- paste("Predictions are for", predicted_class)
