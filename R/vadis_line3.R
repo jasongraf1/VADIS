@@ -40,7 +40,7 @@ vadis_line3 <- function(mod_list, path = NULL, conditional = TRUE){
   output_list[[3]] <- as.dist(dist_mat)
 
   diag(cor_mat) <- NA
-  means <- colMeans(cor_mat2, na.rm = T)
+  means <- colMeans(cor_mat, na.rm = T)
   sim_tab <- data.frame(Similarity = means)
   rownames(sim_tab) <- names(mod_list)
 
