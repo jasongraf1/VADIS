@@ -2,6 +2,8 @@
 #'
 #' @param mod_list A list of regression model objects.
 #' @param path Path in which to save the output as an R data file (\code{.rds}). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.
+#' @param weight A numeric value indicating the size of the "effects" used for approximating the maximal reasonable distance. Default is 1.
+#' @param scale How should the distance matrix be scaled?
 #'
 #' @author Jason Grafmiller
 #'
@@ -24,7 +26,7 @@
 #'
 #' line2 <- vadis_line2(glm_list, path = FALSE)
 #' }
-vadis_line2 <- function(mod_list, path = NULL, scale = c("abs", "minmax")){
+vadis_line2 <- function(mod_list, path = NULL, weight = 1, scale = c("abs", "minmax")){
   output_list <- vector("list")
   raw_tab <- create_coef_table(mod_list) # call function to create varimp rankings
   output_list[[1]] <- raw_tab
@@ -33,7 +35,7 @@ vadis_line2 <- function(mod_list, path = NULL, scale = c("abs", "minmax")){
 
   if (match.arg(scale) == "abs"){
     # get the maximum reasonable distance
-    dmy <- data.frame(a = sample(c(1,-1), size = nrow(raw_tab[-1,]), replace = T))
+    dmy <- data.frame(a = sample(c(weight,-weight), size = nrow(raw_tab[-1,]), replace = T))
     dmy$b <- -dmy$a # exact opposite of a
     maxD <- max(dist(t(dmy), "euclidean"))
     out_dist <- dist_mat/maxD
