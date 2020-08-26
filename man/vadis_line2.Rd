@@ -4,12 +4,16 @@
 \alias{vadis_line2}
 \title{Calculate the second line of evidence for the VADIS method}
 \usage{
-vadis_line2(mod_list, path = NULL)
+vadis_line2(mod_list, path = NULL, weight = 1, scale = c("abs", "minmax"))
 }
 \arguments{
 \item{mod_list}{A list of regression model objects.}
 
 \item{path}{Path in which to save the output as an R data file (\code{.rds}). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.}
+
+\item{weight}{A numeric value indicating the size of the "effects" used for approximating the maximal reasonable distance. Default is 1.}
+
+\item{scale}{How should the distance matrix be scaled?}
 }
 \value{
 A dataframe
@@ -22,12 +26,16 @@ The function loops through a list of model objects, extracts the coefficient est
 }
 \examples{
 \dontrun{
-lm_fnc <- function(x) lm(Sepal.Length ~ Petal.Length + Petal.Width + Sepal.width, data = x)
-rm_list <- fit.vadis.RM(iris, split.by = "Species", fit.func = lm_fnc,
-  path = FALSE)
-summary(rm_list[[1]])
+data_list <- split(particle_verbs_short, particle_verbs_short$Variety, drop = TRUE)
 
-line2 <- calc_line2(rm_list, path = FALSE)
+fmla <- Response ~ DirObjWordLength + DirObjDefiniteness + DirObjGivenness + DirObjConcreteness + DirObjThematicity + DirectionalPP + PrimeType + Semantics + Surprisal.P + Surprisal.V + Register
+
+glm_func <- function(x) glm(fmla, data = x, family = binomial)
+
+glm_list <- lapply(data_list, glm_func)
+names(glm_list) <- names(data_list)
+
+line2 <- vadis_line2(glm_list, path = FALSE)
 }
 }
 \author{

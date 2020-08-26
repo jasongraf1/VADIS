@@ -4,7 +4,8 @@
 \name{particle_verbs_short}
 \alias{particle_verbs_short}
 \title{English particle verbs}
-\format{A data frame with 11340 rows and 26 variables:
+\format{
+A data frame with 11340 rows and 26 variables:
 \describe{
   \item{Variety}{a factor with 9 levels coding the variety from which the token was taken}
   \item{Corpus}{a factor levels \code{GloWbE} and \code{ICE} coding the corpus from which the token was taken}
@@ -33,7 +34,8 @@
   \item{StressClash}{a factor with levels \code{no} and \code{yes} coding whether the continuous variant results in a stress clash across the verb-particle boundary ("conNECT UP")}
   \item{Rhythm}{a numeric vector coding the eurhythmic distance of the observed token}
   ...
-}}
+}
+}
 \source{
 \url{https://osf.io/x8vyw/}
 }

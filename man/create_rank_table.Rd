@@ -4,12 +4,12 @@
 \alias{create_rank_table}
 \title{Create Table of Variable Importance Rankings for VADIS analysis}
 \usage{
-create_rank_table(mod_list, conditional = FALSE)
+create_rank_table(mod_list, conditional = TRUE)
 }
 \arguments{
-\item{mod_list}{A list of random forest model objects, generated with \code{fit_vadis_rf()}. Currently supports objects of \code{\link[party]{RandomForest-class}}, \code{\link[ranger]{ranger}}, and \code{\link[randomForest]{randomForest}}}
+\item{mod_list}{A list of random forest model objects. Currently supports objects of class \code{\link[party]{RandomForest-class}}, \code{\link[ranger]{ranger}}, and \code{\link[randomForest]{randomForest}}}
 
-\item{conditional}{logical. Should unconditional (default) or conditional permutation variable importance be computed. Only applies to \code{RandomForest-class} models from the \code{\link[party]{party}} package.}
+\item{conditional}{logical. Should conditional (default) or unconditional permutation variable importance be computed. Only applies to \code{RandomForest-class} models from the \code{\link[party]{party}} package.}
 
 \item{path}{Path in which to save the output (as \code{.csv} file). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.}
 }
@@ -20,8 +20,8 @@ A dataframe
 Create Table of Variable Importance Rankings for VADIS analysis
 }
 \details{
-The function loops through a list of random forest objects, extracts the variable importance estimates, and compiles them in a single dataframe.
-For forests fit with \code{ranger} or \code{randomForest}, the \code{importance} argument must be specified.
+The function loops through a list of random forest objects, extracts the variable importance estimates, and compiles them in a single dataframe. For \code{\link[party]{RandomForest-class}} models, function uses the \code{\link[permimp]{permimp}} function (Debeer & Strobl 2020) with the default threshold (0.95) and \code{AUC= TRUE} (Janitza et al. 2013).
+For forests fit with \code{\link[ranger]{ranger}} or \code{\link[randomForest]{randomForest}}, the \code{importance} argument must be specified.
 #'
 }
 \examples{
@@ -31,10 +31,15 @@ fmla <- Type ~ PossrAnimacyBin + PossrWordC + PossmWordC + FinalSibilant +
 
 rf_fnc <- function(x) ranger::ranger(fmla, data = x, importance = "permutation")
 
-rf_list <- fit_models(brown_genitives, split.by = "Genre", fit.func = rf_fnc, path = FALSE)
+rf_list <- lapply(data_list, rf_func)
 
 create_rank_table(rf_list, path = FALSE)
 }
+}
+\references{
+Debeer, Dries & Carolin Strobl. 2020. Conditional permutation importance revisited. *BMC Bioinformatics* 21(1). 307. https://doi.org/10.1186/s12859-020-03622-2.
+
+Janitza, Silke, Carolin Strobl & Anne-Laure Boulesteix. 2013. An AUC-based permutation variable importance measure for random forests. *BMC Bioinformatics* 14(1). 119. https://doi.org/10.1186/1471-2105-14-119.
 }
 \author{
 Jason Grafmiller

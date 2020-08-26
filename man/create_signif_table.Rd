@@ -4,10 +4,16 @@
 \alias{create_signif_table}
 \title{Create Table of Significant Effects for VADIS analysis}
 \usage{
-create_signif_table(mod_list)
+create_signif_table(
+  mod_list,
+  alpha = 0.05,
+  method = c("freq", "pd", "rope", "map")
+)
 }
 \arguments{
 \item{mod_list}{A list of regression model objects.}
+
+\item{method}{string indicating which method to use for assessing significance from Bayesian models. See \code{\link[VADIS]{vadis_line1}} for details.}
 
 \item{path}{Path in which to save the output (as \code{.csv} file). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.}
 }

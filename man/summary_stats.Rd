@@ -4,12 +4,12 @@
 \alias{summary_stats}
 \title{Calculate summary statistics for list of models}
 \usage{
-summary_stats(mlist, dlist = NULL, response = NULL)
+summary_stats(model_list, data_list = NULL, response = NULL)
 }
 \arguments{
-\item{mlist}{a list of model objects}
+\item{model_list}{a list of model objects}
 
-\item{dlist}{a list od dataframes}
+\item{data_list}{a list od dataframes}
 
 \item{response}{the names of the response column in the data}
 }

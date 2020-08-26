@@ -27,3 +27,6 @@ mod <- glm(y~x, family=binomial)
 hosmerlem_test(mod, k = 10)
 }
 }
+\references{
+
+}

@@ -4,17 +4,17 @@
 \alias{vadis_line3}
 \title{Calculate the third line of evidence for the VADIS method}
 \usage{
-vadis_line3(mod_list, path = NULL, conditional = FALSE)
+vadis_line3(mod_list, path = NULL, conditional = TRUE)
 }
 \arguments{
 \item{mod_list}{A list of random forest model objects.}
 
 \item{path}{Path in which to save the output as an R data file (\code{.rds}). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.}
 
-\item{conditional}{logical. Should unconditional (default) or conditional permutation variable importance be computed. Only applies to \code{RandomForest-class} models from the \code{\link[party]{party}} package.}
+\item{conditional}{logical. Should conditional (default) or unconditional permutation variable importance be computed. Only applies to \code{RandomForest-class} models from the \code{\link[party]{party}} package.}
 }
 \value{
-A list of length 3
+A list of length 4
 }
 \description{
 Calculate the third line of evidence for the VADIS method
@@ -24,12 +24,16 @@ The function loops through a list of model objects, extracts the coefficient est
 }
 \examples{
 \dontrun{
-lm_fnc <- function(x) lm(Sepal.Length ~ Petal.Length + Petal.Width, data = x)
-rm_list <- fit.vadis.RM(iris, split.by = "Species", fit.func = lm_fnc,
-  path = FALSE)
-summary(rm_list[[1]])
+data_list <- split(particle_verbs_short, particle_verbs_short$Variety, drop = TRUE)
 
-line3 <- calc_line3(rm_list, path = FALSE)
+fmla <- Response ~ DirObjWordLength + DirObjDefiniteness + DirObjGivenness + DirObjConcreteness + DirObjThematicity + DirectionalPP + PrimeType + Semantics + Surprisal.P + Surprisal.V + Register
+
+rf_func <- function(x) ranger(fmla, data = x, importance = "permutation")
+
+rf_list <- lapply(data_list, rf_func)
+names(rf_list) <- names(data_list)
+
+line3 <- vadis_line3(rf_list, path = FALSE)
 }
 }
 \author{
