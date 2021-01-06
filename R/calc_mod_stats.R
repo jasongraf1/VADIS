@@ -89,6 +89,8 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
         ## if `probability = TRUE`, predictions are matrix of the predicted
         ## probabilities for each response class
         fits <- preds[, 2] ## second column in matrix
+        floor <- 1e-15
+        fits <- pmax(pmin(fits, 1 - floor), floor)
         predicted_class <- colnames(preds)[2]
         # msg <- paste("Predictions are for", predicted_class)
         preds <- ifelse(fits > .5, 1, 0)
@@ -109,6 +111,8 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
       probs <- do.call("rbind", mod@predict_response(type = "prob"))
       # predicted_class <- colnames(trp)[2]
       fits <- probs[,2]
+      floor <- 1e-15
+      fits <- pmax(pmin(fits, 1 - floor), floor)
       preds <- ifelse(fits > .5, 1, 0)
       pred_correct = sum(diag(table(preds, y)))/length(y)
       # msg <- paste("Predictions are for", predicted_class)
@@ -133,4 +137,3 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
   # cat(msg, sep = "\n")
   return(output)
 }
-
