@@ -1,6 +1,6 @@
 #' Calculate the third line of evidence for the VADIS method
 #'
-#' @param mod_list A list of random forest model objects.
+#' @param mod_object Either a list of random forest model objects, or a dataframe of variable importance scores, where columns represent separate models and rows represent the predictors in the models.
 #' @param path Path in which to save the output as an R data file (\code{.rds}). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.
 #' @param conditional logical. Should conditional (default) or unconditional permutation variable importance be computed. Only applies to \code{RandomForest-class} models from the \code{\link[party]{party}} package.
 #'
@@ -25,9 +25,15 @@
 #'
 #' line3 <- vadis_line3(rf_list, path = FALSE)
 #' }
-vadis_line3 <- function(mod_list, path = NULL, conditional = TRUE){
+vadis_line3 <- function(mod_object, path = NULL, conditional = TRUE){
+
   output_list <- vector("list")
-  raw_tab <- create_rank_table(mod_list, conditional = conditional) # call function to create varimp rankings
+  if (is.data.frame(mod_object)){
+    raw_tab <- mod_object
+  } else {
+    raw_tab <- create_rank_table(mod_object, conditional = conditional) # call function to create varimp rankings
+  }
+
   output_list[[1]] <- raw_tab
 
   rank_tab <- as.data.frame(lapply(raw_tab, function(x) rank(-x)))
