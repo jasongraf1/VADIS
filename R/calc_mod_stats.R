@@ -83,6 +83,8 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
         fits <- as.numeric(preds) - 1
         predicted_class <- levels(preds)[2]
         pred_correct <- 1 - mod$prediction.error
+        brier_score <- NA
+        log_score <- NA
       } else {
         ## if `probability = TRUE`, predictions are matrix of the predicted
         ## probabilities for each response class
@@ -92,12 +94,15 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
         preds <- ifelse(fits > .5, 1, 0)
         pred_correct <- sum(diag(table(preds, y)))/length(y)
         brier_score <- mod$prediction.error
+        log_score <- mean(abs(y*log(fits) + (1 - y) * log(1 - fits)))
       }
 
     } else if (mclass == "randomForest"){
       preds <- mod$predicted
       fits <- as.numeric(preds) - 1
+      pred_correct <- sum(diag(table(preds, y)))/length(y)
       brier_score <- NA
+      log_score <- NA
     } else if(mclass == "RandomForest"){
       resp <- mod@responses@variables
       y <- as.numeric(resp$Response) - 1
@@ -112,19 +117,20 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
     }
     # put the output into a vector
     # calculate C index and Dxy
-    mean.rank <- mean(rank(fits)[y == 1])
+    mean_rank <- mean(rank(fits)[y == 1])
     n <- length(y)
     n1 <- sum(y == 1)
-    c.index <- (mean.rank - (n1 + 1)/2)/(n - n1)
+    c_index <- (mean_rank - (n1 + 1)/2)/(n - n1)
     output <- data.frame(
       N = as.integer(n),
       baseline = max(table(y)/length(y)),
       predicted.corr = pred_correct,
       Brier = brier_score,
-      C = c.index,
+      C = c_index,
       LogScore = log_score
-      )
+    )
   } else stop(paste("I don't recognize this model class:", mclass))
   # cat(msg, sep = "\n")
   return(output)
 }
+
