@@ -47,9 +47,9 @@ summary_stats <- function(model_list, data_list = NULL, response = NULL){
   }
   # messages
   if ("kappa" %in% names(out_df)){
-    if (is.na(out_df$kappa)) cat("\nTo calculate kappa scores include `x = TRUE` argument in glm()")
+    if (is.na(out_df$kappa[1])) cat("\nTo calculate kappa scores include `x = TRUE` argument in glm()\n")
   }
-  if (is.na(out_df$Brier)) cat("\nBrier and Log scores only available for probability forests.\nInclude `probability = TRUE` in ranger().")
+  if (is.na(out_df$Brier[1])) cat("\nBrier and Log scores only available for probability forests.\nInclude `probability = TRUE` in ranger().\n")
   return(out_df)
 }
 
