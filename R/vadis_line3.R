@@ -28,10 +28,12 @@
 vadis_line3 <- function(mod_object, path = NULL, conditional = TRUE){
 
   output_list <- vector("list")
-  if (is.data.frame(mod_object)){
+  if (is.data.frame(mod_object) || is.matrix(mod_object)){
     raw_tab <- mod_object
-  } else {
+  } else if (is.list(mod_object)){
     raw_tab <- create_rank_table(mod_object, conditional = conditional) # call function to create varimp rankings
+  } else {
+    stop(paste("Function does not work with objects of class", class(mod_object)[1]))
   }
 
   output_list[[1]] <- raw_tab
