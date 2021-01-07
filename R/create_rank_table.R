@@ -47,7 +47,6 @@ create_rank_table <- function(mod_list, conditional = TRUE) {
     varimp_tab <- as.data.frame(
       do.call("cbind", lapply(varimp_list, function(x) x$values))
     )
-    names(varimp_tab) <- names(mod_list)
   } else if (type == "randomForest"){
     varimp_list <- lapply(mod_list, FUN = function(m) randomForest::importance(m))
     varimp_tab <- data.frame(sapply(varimp_list, c))
