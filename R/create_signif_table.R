@@ -26,21 +26,20 @@ create_signif_table <- function(mod_list, alpha = .05, method = c("freq", "pd", 
   if (type %in% c("lm", "glm", "merMod", "glmerMod")){
     sig_coef_tab <- as.data.frame(lapply(mod_list, FUN = function(m) ifelse(summary(m)$coefficients[,4] < alpha, 1, 0)))
   } else if (type[1] == "brmsfit"){
-    if (method == "rope"){
+    if (method[1] == "rope"){
       sig_coef_tab <- as.data.frame(
         lapply(mod_list,
-           FUN = function(m){
-             sig <- bayestestR::p_rope(m) %>%
-               as.data.frame() %>%
-               mutate(
-                 significance = ifelse(p_ROPE < alpha/2, 1, 0)
-               ) %>%
-               pull(significance)
-             names(sig) <- rownames(as.data.frame(summary(m)$fixed))
-             return(sig)
-           }))
-      names(sig_coef_tab) <- names(mod_list)
-    } else if (method == "pd"){
+               FUN = function(m){
+                 sig <- bayestestR::p_rope(m) %>%
+                   as.data.frame() %>%
+                   mutate(
+                     significance = ifelse(p_ROPE < alpha/2, 1, 0)
+                   ) %>%
+                   pull(significance)
+                 names(sig) <- rownames(as.data.frame(summary(m)$fixed))
+                 return(sig)
+               }))
+    } else if (method[1] == "pd"){
       sig_coef_tab <- as.data.frame(
         lapply(mod_list,
                FUN = function(m){
@@ -53,8 +52,7 @@ create_signif_table <- function(mod_list, alpha = .05, method = c("freq", "pd", 
                  names(sig) <- rownames(as.data.frame(summary(m)$fixed))
                  return(sig)
                }))
-      names(sig_coef_tab) <- names(mod_list)
-    } else if (method == "map"){
+    } else if (method[1] == "map"){
       sig_coef_tab <- as.data.frame(
         lapply(mod_list,
                FUN = function(m){
@@ -67,23 +65,22 @@ create_signif_table <- function(mod_list, alpha = .05, method = c("freq", "pd", 
                  names(sig) <- rownames(as.data.frame(summary(m)$fixed))
                  return(sig)
                }))
-      names(sig_coef_tab) <- names(mod_list)
     } else {
       sig_coef_tab <- as.data.frame(
         lapply(mod_list,
-        FUN = function(m){
-          fixed <- brms::posterior_interval(
-            m,
-            prob = 1 - alpha,
-            pars = rownames(summary(m)$fixed)
-            )
-          fixed
-          sig <- rep(0, nrow(fixed))
-          sig[fixed[, 1] > 0 & fixed[, 2] > 0] <- 1
-          sig[fixed[, 1] < 0 & fixed[, 2] < 0] <- 1
-          names(sig) <- rownames(summary(m)$fixed)
-          return(sig)
-        }))
+               FUN = function(m){
+                 fixed <- brms::posterior_interval(
+                   m,
+                   prob = 1 - alpha,
+                   pars = "^b_"
+                 )
+                 fixed
+                 sig <- rep(0, nrow(fixed))
+                 sig[fixed[, 1] > 0 & fixed[, 2] > 0] <- 1
+                 sig[fixed[, 1] < 0 & fixed[, 2] < 0] <- 1
+                 names(sig) <- rownames(summary(m)$fixed)
+                 return(sig)
+               }))
     }
     names(sig_coef_tab) <- names(mod_list)
   } else {
