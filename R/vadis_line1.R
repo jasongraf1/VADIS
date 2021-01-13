@@ -37,7 +37,7 @@
 vadis_line1 <- function(mod_list, path = NULL, alpha = .05, method = c("freq", "pd", "rope", "map")){
 
   output_list <- vector("list")
-  raw_tab <- create_signif_table(mod_list, alpha = alpha, method = method)
+  raw_tab <- create_signif_table(mod_list, alpha = alpha, method = method[1])
   output_list[[1]] <- raw_tab
 
   dist_mat <- dist(t(raw_tab[-1,]), method = "euclidean")^2 # omit intercept
