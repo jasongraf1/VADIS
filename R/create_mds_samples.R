@@ -78,9 +78,9 @@ create_mds_samples <- function(mod_list, n_samples = 200L, k = 3, vadis_line = N
 
   if (is.null(path)) {
     path <- paste0(getwd(), "/vadis_line2_output_", format(Sys.time(), "%Y-%b-%d_%H-%M"), ".csv")
-    write_csv(output_list, file = path)
+    write_csv(mds_variety_df, file = path)
     } else if (is.character(path)) {
-    write_csv(output_list, file = path)
+    write_csv(mds_variety_df, file = path)
   }
   return(mds_variety_df)
 }
