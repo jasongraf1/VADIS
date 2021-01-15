@@ -26,7 +26,7 @@
 #'
 #' line2 <- vadis_line2(glm_list, path = FALSE)
 #' }
-vadis_line2 <- function(mod_list, path = NULL, weight = 1, scale = c("abs", "minmax")){
+vadis_line2 <- function(mod_list, path = NULL, weight = 1, scale = c("abs", "mean", "minmax", "none")){
   output_list <- vector("list")
   raw_tab <- create_coef_table(mod_list) # call function to create varimp rankings
   output_list[[1]] <- raw_tab
@@ -39,22 +39,20 @@ vadis_line2 <- function(mod_list, path = NULL, weight = 1, scale = c("abs", "min
     dmy$b <- -dmy$a # exact opposite of a
     maxD <- max(dist(t(dmy), "euclidean"))
     out_dist <- dist_mat/maxD
-
-    # Now normalize all distances to the maximum reasonable distance
-    weighted_dist <- as.matrix(out_dist)
-    diag(weighted_dist) <- NA # remove diagonals before calculating means
-    means <- colMeans(weighted_dist, na.rm = T)
-    sim_tab <- data.frame(Similarity = 1 - means)
-    rownames(sim_tab) <- names(mod_list)
   } else if (match.arg(scale) == "minmax"){
     out_dist <- minmax(dist_mat)
-
-    weighted_dist <- as.matrix(out_dist)
-    diag(weighted_dist) <- NA # remove diagonals before calculating means
-    means <- colMeans(weighted_dist, na.rm = T)
-    sim_tab <- data.frame(Similarity = 1 - means)
-    rownames(sim_tab) <- names(mod_list)
+  } else if (match.arg(scale) == "mean"){
+    out_dist <- (dist_mat - mean(dist_mat))/(max(dist_mat) - min(dist_mat))
+  } else {
+    out_dist <- dist_mat
   }
+
+  # Now normalize all distances to the maximum reasonable distance
+  weighted_dist <- as.matrix(out_dist)
+  diag(weighted_dist) <- NA # remove diagonals before calculating means
+  means <- colMeans(weighted_dist, na.rm = T)
+  sim_tab <- data.frame(Similarity = 1 - means)
+  rownames(sim_tab) <- names(mod_list)
 
   # save normalized distances to output
   output_list[[2]] <- out_dist
