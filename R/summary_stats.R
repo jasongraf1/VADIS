@@ -4,8 +4,34 @@
 #' @param data_list a list od dataframes
 #' @param response the names of the response column in the data
 #'
-#' @return a vector
+#' @return a dataframe with one or more of the following columns
+#'
+#' \itemize{
+#'   \item{N}{The number of observations in the dataset}
+#'   \item{baseline}{The baseline accuracy of the dataset}
+#'   \item{predicted.corr}{The proportion of observations correctly predicted by the model}
+#'   \item{Brier}{The Brier score of model accuracy. Only available for models that return predicted probabilities.}
+#'   \item{C}{The Concordance index (see Harrell 2015:256-258)}
+#'   \item{LogScore}{The cross-entropy loss, or log loss, score, which measures the performance of a classification model whose output is a probability value between 0 and 1. Only available for models that return predicted probabilities.}
+#'   \item{AIC}{The Akaike Information Criterion. Only given for regression models fit with \code{glm} and \code{glmer}}
+#'   \item{WAIC}{The Widely Applicable Information Criterion, or Watanabe–Akaike Information Criterion. Only given for regression models fit with \code{brm}}
+#'   \item{Max.VIF}{The maximal variance inflation factor obtained from the covariance matrix of parameter estimates in the model using the method of Davis et al. (1986). An indication of multicollinearity. Only given for regression models fit with \code{glm} and \code{glmer}
+#'   \item{kappa}{The condition number calculated from the model matrix (with the intercept included), following Belsley et al. (1980).  Only given for regression models fit with \code{glm} and \code{glmer}}
+#'   \item{HosLem.p}{The p-value from the Hosmer-Lemeshow goodness of fit test for logistic regression. Values \emph{below} .05 indicate evidence of poor model fit. Only given for regression models fit with \code{glm} and \code{glmer}}
+#'   \item{elpd_loo}{The Bayesian leave-one-out (LOO) estimate of the expected log pointwise predictive density (ELPD). See Vehtari et al. (2017) and \url{https://avehtari.github.io/modelselection/CV-FAQ.html} for details.}
+#'   \item{p_loo}{}
+#'   \item{looic}{}
+#' }
+#'
 #' @export
+#'
+#' @references Belsley, D. A. and Kuh, E. and Welsch, R. E. 1980. \emph{Regression Diagnostics. Identifying Influential Data and Sources of Collinearity}, Wiley Series in Probability and Mathematical Statistics, New York.
+#'
+#' Davis, C. E., Hyde, J. E., Bangdiwala, S. I., & Nelson, J. J. 1986. An example of dependencies among variables in a conditional logistic regression. \emph{Modern statistical methods in chronic disease epidemiology} 140. 147.
+#'
+#' Harrell, Frank E. 2015. \emph{Regression Modeling Strategies}. 2nd edn. New York: Springer.
+#'
+#' Vehtari, Aki, Andrew Gelman & Jonah Gabry. 2017. Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC. \emph{Statistics and Computing} 27(5). 1413–1432.
 #'
 #' @examples
 #' \dontrun{

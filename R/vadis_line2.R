@@ -3,15 +3,27 @@
 #' @param mod_list A list of regression model objects.
 #' @param path Path in which to save the output as an R data file (\code{.rds}). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.
 #' @param weight A numeric value indicating the size of the "effects" used for approximating the maximal reasonable distance. Default is 1.
-#' @param scale How should the distance matrix be scaled?
+#' @param scale How should the distance matrix be scaled? See details
 #'
 #' @author Jason Grafmiller
 #'
 #' @details The function loops through a list of model objects, extracts the coefficient estimates, and compiles them in a single dataframe.
 #'
+#' For scaling, there are four options. The default, \code{"abs"} (absolute), scales by a constant term based on the maximum reasonable distance, and values are bounded between 0 and 1 (see Szmrecsanyi et al. 2019). \code{"minmax"} uses minmax normalization, defined as
+#'
+#' \deqn{ x' = \frac{x - min(x)}{max(x) - min(x)}}{x' = (x - min(x))/(max(x) - min(x))}
+#'
+#' Minmax scaling bound values between 0 and 1. \code{"mean"} uses mean normalization, defined as
+
+#' \deqn{ x' = \frac{x - mean(x)}{max(x) - min(x)}}{x' = (x - mean(x))/(max(x) - min(x))}
+#'
+#' If \code{scale = "none"} no scaling is applied.
+#'
 #' @return A dataframe
 #'
 #' @export
+#'
+#' @references Szmrecsanyi, Benedikt, Jason Grafmiller & Laura Rosseel. 2019. Variation-Based Distance and Similarity Modeling: A Case Study in World Englishes. \emph{Frontiers in Artificial Intelligence} 2. \url{https://doi.org/10.3389/frai.2019.00023}.
 #'
 #' @examples
 #' \dontrun{
