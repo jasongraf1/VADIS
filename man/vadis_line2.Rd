@@ -4,7 +4,12 @@
 \alias{vadis_line2}
 \title{Calculate the second line of evidence for the VADIS method}
 \usage{
-vadis_line2(mod_list, path = NULL, weight = 1, scale = c("abs", "minmax"))
+vadis_line2(
+  mod_list,
+  path = NULL,
+  weight = 1,
+  scale = c("abs", "mean", "minmax", "none")
+)
 }
 \arguments{
 \item{mod_list}{A list of regression model objects.}
@@ -13,16 +18,30 @@ vadis_line2(mod_list, path = NULL, weight = 1, scale = c("abs", "minmax"))
 
 \item{weight}{A numeric value indicating the size of the "effects" used for approximating the maximal reasonable distance. Default is 1.}
 
-\item{scale}{How should the distance matrix be scaled?}
+\item{scale}{How should the distance matrix be scaled? See details}
 }
 \value{
-A dataframe
+A \code{list} of length 3.
+\describe{
+\item{\code{coef.table}}{A dataframe of \emph{P} predictors by \emph{M} models, containing the pointwise estimated  coefficients (for \code{glm} and \code{glmer} models) or the mean posterior \beta estimates (for \code{brmsfit} models) for each predictor in each model.}
+\item{\code{distance.matrix}}{An \emph{M} by \emph{M} distance matrix of class \code{dist}, derived from \code{coef.table}. Values are (normalized) Euclidean distances.}
+\item{\code{similarity.scores}}{A dataframe of similarity scores derive from \code{distance.matrix}. See Szmrecsanyi et al. (2019) for details.}
+}
 }
 \description{
 Calculate the second line of evidence for the VADIS method
 }
 \details{
 The function loops through a list of model objects, extracts the coefficient estimates, and compiles them in a single dataframe.
+
+For scaling, there are four options. The default, \code{"abs"} (absolute), scales by a constant term based on the maximum reasonable distance, and values are bounded between 0 and 1 (see Szmrecsanyi et al. 2019). \code{"minmax"} uses minmax normalization, defined as
+
+\deqn{ x' = \frac{x - min(x)}{max(x) - min(x)}}{x' = (x - min(x))/(max(x) - min(x))}
+
+Minmax scaling bound values between 0 and 1. \code{"mean"} uses mean normalization, defined as
+\deqn{ x' = \frac{x - mean(x)}{max(x) - min(x)}}{x' = (x - mean(x))/(max(x) - min(x))}
+
+If \code{scale = "none"} no scaling is applied.
 }
 \examples{
 \dontrun{
@@ -37,6 +56,9 @@ names(glm_list) <- names(data_list)
 
 line2 <- vadis_line2(glm_list, path = FALSE)
 }
+}
+\references{
+Szmrecsanyi, Benedikt, Jason Grafmiller & Laura Rosseel. 2019. Variation-Based Distance and Similarity Modeling: A Case Study in World Englishes. \emph{Frontiers in Artificial Intelligence} 2. \url{https://doi.org/10.3389/frai.2019.00023}.
 }
 \author{
 Jason Grafmiller

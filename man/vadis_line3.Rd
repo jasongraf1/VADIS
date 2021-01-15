@@ -4,17 +4,23 @@
 \alias{vadis_line3}
 \title{Calculate the third line of evidence for the VADIS method}
 \usage{
-vadis_line3(mod_list, path = NULL, conditional = TRUE)
+vadis_line3(mod_object, path = NULL, conditional = TRUE)
 }
 \arguments{
-\item{mod_list}{A list of random forest model objects.}
+\item{mod_object}{Either a list of random forest model objects, or a dataframe of variable importance scores, where rows represent separate models and columns represent the importance values of the predictors in the models.}
 
 \item{path}{Path in which to save the output as an R data file (\code{.rds}). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.}
 
 \item{conditional}{logical. Should conditional (default) or unconditional permutation variable importance be computed. Only applies to \code{RandomForest-class} models from the \code{\link[party]{party}} package.}
 }
 \value{
-A list of length 4
+A \code{list} of length 4.
+\describe{
+\item{\code{varimp.table}}{A dataframe of \emph{P} predictors by \emph{M} random forest models, containing the variable importance scores obtained for each predictor in the models. }
+\item{\code{rank.table}}{A dataframe of \emph{P} predictors by \emph{M} random forest models, containing the rankings of predictors in each model by variable importance score in \code{varimp.table}.}
+\item{\code{distance.matrix}}{An \emph{M} by \emph{M} distance matrix of class \code{dist}, derived from \code{rank.table}. Values are calculated as 1 - the Spearman rank correlation \rho.}
+\item{\code{similarity.scores}}{A dataframe of similarity scores derive from \code{distance.matrix}. See Szmrecsanyi et al. (2019) for details.}
+}
 }
 \description{
 Calculate the third line of evidence for the VADIS method
@@ -35,6 +41,9 @@ names(rf_list) <- names(data_list)
 
 line3 <- vadis_line3(rf_list, path = FALSE)
 }
+}
+\references{
+Szmrecsanyi, Benedikt, Jason Grafmiller & Laura Rosseel. 2019. Variation-Based Distance and Similarity Modeling: A Case Study in World Englishes. \emph{Frontiers in Artificial Intelligence} 2. \url{https://doi.org/10.3389/frai.2019.00023}.
 }
 \author{
 Jason Grafmiller

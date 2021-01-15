@@ -4,7 +4,7 @@
 \alias{calc_kappa}
 \title{Calculate condition number kappa}
 \usage{
-calc_kappa(mod)
+calc_kappa(mod, data = NULL)
 }
 \arguments{
 \item{mod}{a model object created by \code{lm, glm, lmer, glmer}}

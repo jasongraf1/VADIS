@@ -21,7 +21,12 @@ vadis_line1(
 \item{method}{The method for calculating significance values. See details.}
 }
 \value{
-A list of length 3.
+A \code{list} of length 3.
+\describe{
+\item{\code{signif.table}}{A dataframe of \emph{P} predictors by \emph{M} models, containing a binary value indicating statistical significance (1 = significant) for each predictor in each model.}
+\item{\code{distance.matrix}}{An \emph{M} by \emph{M} distance matrix of class \code{dist}, derived from \code{signif.table}. Values are squared Euclidean distances normalized by the number of predictors \emph{P}.}
+\item{\code{similarity.scores}}{A dataframe of similarity scores derive from \code{distance.matrix}. See Szmrecsanyi et al. (2019) for details.}
+}
 }
 \description{
 Calculate the first line of evidence for the VADIS method
@@ -49,6 +54,8 @@ line1 <- vadis_line1(glm_list, path = FALSE)
 Kruschke, John K. & Torrin M. Liddell. 2018. The Bayesian New Statistics: Hypothesis testing, estimation, meta-analysis, and power analysis from a Bayesian perspective. \emph{Psychonomic Bulletin & Review} 25(1). 178–206. doi: 10.3758/s13423-016-1221-4.
 
 Makowski, Dominique, Mattan S. Ben-Shachar, S. H. Annabel Chen & Daniel Lüdecke. 2019. Indices of effect existence and significance in the Bayesian framework. \emph{Frontiers in Psychology}. 10. doi: 10.3389/fpsyg.2019.02767.
+
+Szmrecsanyi, Benedikt, Jason Grafmiller & Laura Rosseel. 2019. Variation-Based Distance and Similarity Modeling: A Case Study in World Englishes. \emph{Frontiers in Artificial Intelligence} 2. \url{https://doi.org/10.3389/frai.2019.00023}.
 }
 \author{
 Jason Grafmiller
