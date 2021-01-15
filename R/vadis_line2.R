@@ -19,7 +19,12 @@
 #'
 #' If \code{scale = "none"} no scaling is applied.
 #'
-#' @return A dataframe
+#' @return A \code{list} of length 3.
+#' \describe{
+#' \item{\code{coef.table}}{A dataframe of \emph{P} predictors by \emph{M} models, containing the pointwise estimated  coefficients (for \code{glm} and \code{glmer} models) or the mean posterior \beta estimates (for \code{brmsfit} models) for each predictor in each model.}
+#' \item{\code{distance.matrix}}{An \emph{M} by \emph{M} distance matrix of class \code{dist}, derived from \code{coef.table}. Values are (normalized) Euclidean distances.}
+#' \item{\code{similarity.scores}}{A dataframe of similarity scores derive from \code{distance.matrix}. See Szmrecsanyi et al. (2019) for details.}
+#' }
 #'
 #' @export
 #'

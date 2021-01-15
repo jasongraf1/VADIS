@@ -8,7 +8,15 @@
 #'
 #' @details The function loops through a list of model objects, extracts the coefficient estimates, and compiles them in a single dataframe.
 #'
-#' @return A list of length 4
+#' @return A \code{list} of length 4.
+#' \describe{
+#' \item{\code{varimp.table}}{A dataframe of \emph{P} predictors by \emph{M} random forest models, containing the variable importance scores obtained for each predictor in the models. }
+#' \item{\code{rank.table}}{A dataframe of \emph{P} predictors by \emph{M} random forest models, containing the rankings of predictors in each model by variable importance score in \code{varimp.table}.}
+#' \item{\code{distance.matrix}}{An \emph{M} by \emph{M} distance matrix of class \code{dist}, derived from \code{rank.table}. Values are calculated as 1 - the Spearman rank correlation \rho.}
+#' \item{\code{similarity.scores}}{A dataframe of similarity scores derive from \code{distance.matrix}. See Szmrecsanyi et al. (2019) for details.}
+#' }
+#'
+#' @references Szmrecsanyi, Benedikt, Jason Grafmiller & Laura Rosseel. 2019. Variation-Based Distance and Similarity Modeling: A Case Study in World Englishes. \emph{Frontiers in Artificial Intelligence} 2. \url{https://doi.org/10.3389/frai.2019.00023}.
 #'
 #' @export
 #'
