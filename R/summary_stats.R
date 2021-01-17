@@ -46,6 +46,10 @@
 #' summary_stats(rm_list)
 #' }
 summary_stats <- function(model_list, data_list = NULL, response = NULL){
+
+  if (!is.list(model_list)) model_list <- list(m1 = model_list)
+  if (!is.list(data_list)) data_list <- list(d1 = data_list)
+
   # Loop through models and calculate the stats
   mclass <- class(model_list[[1]])[1]
   msg <- c()
