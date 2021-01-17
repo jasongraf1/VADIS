@@ -39,17 +39,19 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
     resp <- data[, response]
     # msg <- paste("Predictions are for", levels(resp)[2])
   } else if (mclass == "brmsfit") {
-    resp <- data[, response]
+    if (is.null(data)) data <- mod$data
+    resp <- data[, 1]
     y <- as.numeric(resp) - 1
-    fits <- fitted(mod)
-    preds <- ifelse(fits$Estimate > .5, 1, 0)
+    fits_tab <- fitted(mod)
+    fits <- fits[, "Estimate"]
+    preds <- ifelse(fits > .5, 1, 0)
     brier_score <- mean((fits - y)^2)
     log_score <- mean(abs(y*log(fits) + (1 - y) * log(1 - fits)))
     mean.rank <- mean(rank(fits)[y == 1])
     n <- length(y)
     n1 <- sum(y == 1)
     c.index <- (mean.rank - (n1 + 1)/2)/(n - n1)
-    kappa <- calc_kappa(mod)
+    # kappa <- calc_kappa(mod) # to sort out later...
     # get the loo estimates
     loo_estimates <- mod$criteria$loo$estimates
 
@@ -64,8 +66,7 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
       WAIC = aic,
       elpd_loo = loo_estimates[1, 1],
       p_loo = loo_estimates[2, 1],
-      looic = loo_estimates[3, 1],
-      kappa = kappa
+      looic = loo_estimates[3, 1]
     )
 
   } else if (mclass %in% c("ranger", "RandomForest", "randomForest")){
