@@ -52,7 +52,7 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
     n1 <- sum(y == 1)
     c.index <- (mean.rank - (n1 + 1)/2)/(n - n1)
     # kappa <- calc_kappa(mod) # to sort out later...
-    waic <- gen_brm1$criteria$waic$estimates[3, 1]
+    waic <- mod$criteria$waic$estimates[3, 1]
     # get the loo estimates
     loo_estimates <- mod$criteria$loo$estimates
 
