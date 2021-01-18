@@ -39,8 +39,13 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
     resp <- data[, response]
     # msg <- paste("Predictions are for", levels(resp)[2])
   } else if (mclass == "brmsfit") {
-    if (is.null(data)) data <- mod$data
-    resp <- data[, 1]
+    if (is.null(data)) {
+      data <- mod$data
+      response <- 1
+    } else if (is.null(response)){
+      stop("You must enter the response column")
+    }
+    resp <- data[, response]
     y <- as.numeric(resp) - 1
     fits_tab <- fitted(mod)
     fits <- fits_tab[, "Estimate"]
