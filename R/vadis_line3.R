@@ -1,6 +1,6 @@
 #' Calculate the third line of evidence for the VADIS method
 #'
-#' @param mod_object Either a list of random forest model objects, or a dataframe of variable importance scores, where rows represent separate models and columns represent the importance values of the predictors in the models.
+#' @param mod_object Either a list of random forest model objects, or a dataframe of variable importance scores, where rows represent predictors in the models and columns represent the varieties to compare.
 #' @param path Path in which to save the output as an R data file (\code{.rds}). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.
 #' @param conditional logical. Should conditional (default) or unconditional permutation variable importance be computed. Only applies to \code{RandomForest-class} models from the \code{\link[party]{party}} package.
 #'
