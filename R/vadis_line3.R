@@ -58,7 +58,7 @@ vadis_line3 <- function(mod_object, path = NULL, conditional = TRUE){
   diag(cor_mat) <- NA
   means <- colMeans(cor_mat, na.rm = T)
   sim_tab <- data.frame(Similarity = means)
-  rownames(sim_tab) <- names(mod_list)
+  rownames(sim_tab) <- names(mod_object)
 
   output_list[[4]] <- sim_tab
 
