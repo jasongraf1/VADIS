@@ -71,9 +71,9 @@ summary_stats <- function(model_list, data_list = NULL, response = NULL){
   # loop through models
   for(i in seq_along(model_list)){
     mod <- model_list[[i]]
-    if(is.null(data_list)) {
-      df <- NULL
-      } else df <- data_list[[i]]
+    if(!is.null(data_list)) {
+      df <- data_list[[i]]
+      } else df <- NULL
     out_df[i, ] <- calc_mod_stats(mod, df, response)
   }
   # messages
