@@ -7,6 +7,7 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
     if (mclass == "glm"){
       y <- mod$y # vector of responses
       aic <- mod$aic
+      data <- mod$data
     } else if (mclass == "glmerMod") {
       y <- lme4::getME(mod, "y") # vector of responses
       aic <- extractAIC(mod)[2]
@@ -36,7 +37,6 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
       Max.VIF = maxVIF,
       kappa = kappa,
       hoslem.p = round(hoslem, 3))
-    resp <- data[, response]
     # msg <- paste("Predictions are for", levels(resp)[2])
   } else if (mclass == "brmsfit") {
     if (is.null(data)) {
