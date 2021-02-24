@@ -27,19 +27,19 @@ knitr::opts_knit$set(
   cache.path = "vignettes/basic_vadis_cache/") 
 ```
 
-This vignette introduces the basics of the Variation-Based Distance & Similarity Modeling (**VADIS**) method and demonstrates how to use the core functions in the `VADIS` package. The VADIS method builds upon techniques in comparative sociolinguistics and quantitative dialectometry for quantifying the similarity between varieties and dialects as captured by correspondences among the ways in which language users choose between different ways of saying the same thing. For details of the method and theoretical motivation see @SzmrecsanyiInprep and @GrafmillerToappear. 
+This vignette introduces the basics of the Variation-Based Distance & Similarity Modeling (**VADIS**) method and demonstrates how to use the core functions in the `VADIS` package. The VADIS method builds upon techniques in comparative sociolinguistics and quantitative dialectometry for quantifying the similarity between varieties and dialects as captured by correspondences among the ways in which language users choose between different ways of saying the same thing. For details of the method and theoretical motivation see @szmrecsanyi_variationbased_2019 and @grafmiller_mapping_2018 
 
 The basic libraries you'll need for this vignette.
 
 ```{r libs, comment=F, message=FALSE, error=FALSE}
 library(tidyverse) # for data wrangling
 library(lme4) # for regression models
-library(party) # for random forests
+library(ranger) # for random forests
 library(permimp) # for conditional permutation importance
 library(phangorn) # for neighborNets
 ```
 
-Install from GitHub and load the `VADIS` package.
+Install from GitHub with `devtools` and load the `VADIS` package.
 
 ```{r eval = F}
 devtools::install_github("jasongraf1/VADIS")
@@ -56,7 +56,7 @@ For this tutorial, we will examine how the constraints on the placement of postv
 (a) *She uses a pair of long metal scissors to **cut off** a length of it.* [continuous order]
 (b) *She uses a pair of long metal scissors to **cut** a length of it **off**.* [split order] 
 
-We'll use a version of the dataset of particle verb constructions used by @GrafmillerToappear. Full details of the dataset can be found here: [https://osf.io/x8vyw/](https://osf.io/x8vyw/). 
+We'll use a version of the dataset of particle verb constructions used by @grafmiller_mapping_2018 Full details of the dataset can be found here: [https://osf.io/x8vyw/](https://osf.io/x8vyw/). 
 
 ```{r}
 # call the dataset 
@@ -77,7 +77,7 @@ ggplot(pv, aes(Variety, fill = Response)) +
 
 The VADIS method is designed to measure the degree of (dis)similarity among "variable grammars" of different dialects or varieties, where a variable grammar is understood as the set of constraints (a.k.a. predictors or "conditioning factors") governing the choice between two or more linguistic variants. Variants can be individual lexical items (*sneakers* vs. *trainers* vs. *tennis shoes*), grammatical constructions (*give me the book* vs. *give the book to me*), or phonetic realizations of a particular phoneme (e.g. [ʊ] vs. [ʌ] pronunciations of the **<span style="font-family:Times New Roman, Times, serif">STRUT</span>** vowel).  
 
-The method takes inspiration from comparative sociolinguistics [see e.g. @Tagliamonte2013], which evaluates the relatedness between varieties and dialects based on how similar the conditioning of variation is in these varieties. Comparative sociolinguists rely on three lines of evidence to determine relatedness:  
+The method takes inspiration from comparative sociolinguistics [see e.g. @tagliamonte_comparative_2013], which evaluates the relatedness between varieties and dialects based on how similar the conditioning of variation is in these varieties. Comparative sociolinguists rely on three lines of evidence to determine relatedness:  
 
 1. Are the same constraints significant across varieties? 
 2. Do the constraints have the same strength across varieties? 
@@ -101,7 +101,7 @@ Now we're ready to begin.
 
 ## Step 1
 
-In the first step we identify the most important constraints on our variable. We know from prior research [e.g. @Grafmiller2018; @Gries2003] that many different factors influence the choice of particle placement, including:
+In the first step we identify the most important constraints on our variable. We know from prior research [e.g. @grafmiller_mapping_2018; @gries_multifactorial_2003] that many different factors influence the choice of particle placement, including:
 
 - Length, definiteness, concreteness, and discourse accessibility of the direct object (Note: personal pronoun direct objects are excluded from this dataset)
 - The semantic idiomaticity of the verb-particle
@@ -168,7 +168,7 @@ names(glmer_list) <- names(data_list)
 Before moving on, we should check that the models fit the data well, and that we don't have any issues with collinearity or other signs of trouble. The `summary_stats()` function gives a number of statistics to consider.
 
 ```{r warning = F}
-summary_stats(glm_list) %>% 
+summary_stats(glm_list, data_list) %>% 
   round(3)
 ```
 
@@ -182,8 +182,8 @@ These are:
 - `LogScore`: the log score (log loss). Values closer to 0 reflect better prediction
 - `AIC`: the model's Akaike Information Criterion
 - `Max.VIF`: the maximum variance inflation factor for the model's parameter estimates. Values above 10 suggest potentially troublesome collinearity among predictors
-- `kappa`: the condition number indicating overall data multicollinearity. Values < 6 indicate no collinearity; ~15 indicate medium collinearity; > 30 indicate a worrysome degree of collinearity [@Baayen2008, 198-200].
-- `HosLem.p`: the p-value of the Hosmer-Lemeshow test for goodness of fit [@Hosmer1980]. This is a popular though controversial goodness of fit test for logistic regression [see @Harrell2015b, 236-237]. Low values (*p* < .05) indicate potential problems.
+- `kappa`: the condition number indicating overall data multicollinearity. Values < 6 indicate no collinearity; ~15 indicate medium collinearity; > 30 indicate a worrysome degree of collinearity [@baayen_analyzing_2008, 198-200].
+- `HosLem.p`: the p-value of the Hosmer-Lemeshow test for goodness of fit [@hosmer_goodness_1980]. This is a popular though controversial goodness of fit test for logistic regression [see @harrell_regression_2015, 236-237]. Low values (*p* < .05) indicate potential problems.
 
 All the models appear to discriminate between the two responses fairly well, though some of our models may have some issues with model fit. We'll set this aside for the time being.
 
@@ -195,8 +195,8 @@ In step 3 we look at the first line of evidence: "Are the same constraints signi
 We do this with the `vadis_line1()` function. This function returns a list with three elements.
 
 - `signif.table`: A table of predictor significance values, including the intercept. 1 = significant, 0 = non-significant
-- `distance.matrix`: A distance matrix derived from `signif.table`. For line 1 distances are [Hamming distances](https://en.wikipedia.org/wiki/Hamming_distance), which in the case of binary data is equivalent to the Manhattan or squared Euclidean distance (the intercept is *excluded* when calculating the distances). In such cases these distances are equivalent to the number of constraints onr which the two varieties disagree about their statistical significance. These distances are then normalized by dividing by the total number of constraints, i.e. the maximum number of constraints on which two varieties could disagree.
-- `similarity.scores`: A table of scores measuring the mean similarity for each variety to all the others. See @SzmrecsanyiInprep for description of how these are calculated.
+- `distance.matrix`: A distance matrix derived from `signif.table`. For line 1 distances are [Hamming distances](https://en.wikipedia.org/wiki/Hamming_distance), which in the case of binary data is equivalent to the Manhattan or squared Euclidean distance (the intercept is *excluded* when calculating the distances). In such cases these distances are equivalent to the number of constraints on which the two varieties disagree about their statistical significance. These distances are then normalized by dividing by the total number of constraints, i.e. the maximum number of constraints on which two varieties could disagree.
+- `similarity.scores`: A table of scores measuring the mean similarity for each variety to all the others. See @szmrecsanyi_variationbased_2019 for description of how these are calculated.
 
 The `path` argument tells the function where to save the output. The default setting saves a file `vadis_line1_output_2018-Oct-30_15.04.rds` to the current working directory. Note that the output of the function is a list object, so it saves it as an R data object file (`.rds`). Setting `path = FALSE` tells it not to save anything. 
 
@@ -240,7 +240,7 @@ In the next step we look at the second line of evidence. We do this with the `va
 
 - `coef.table`: A table of predictor coefficients from the regression models, including the intercept.
 - `distance.matrix`: A distance matrix based on `coef.table`. For this function distances are [Euclidean distances](https://en.wikipedia.org/wiki/Euclidean_distance), normalized to a maximum reasonable distance (see below). The intercept is *excluded* when calculating the distances.
-- `similarity.scores`: A table of coefficients measured as the mean similarity for each variety to all the others. See @SzmrecsanyiInprep for description of how these are calculated.
+- `similarity.scores`: A table of coefficients measured as the mean similarity for each variety to all the others. See @szmrecsanyi_variationbased_2019 for description of how these are calculated.
 
 ```{r}
 coef_line <- vadis_line2(glm_list, path = FALSE)
@@ -294,37 +294,68 @@ With `weight = 2` the absolute distances are now half what they were before, but
 
 In this step we calculate the conditional random forest models of each dataset. From these we'll then calculate variable importance rankings which comprise the third line of evidence. We recommend either the `party` or `ranger` packages for fitting random forests. Note that for `ranger` forests, the `importance` argument must be specified in the model fitting function.
 
-Now we loop over the datasets in `data_list` and apply the modeling function just like we did with the regression models. In this tutorial we'll use the `cforest()` function in the `party` package, but the `VADIS` package also supports random forests generated with `ranger`. **NOTE**: The `controls` options below are just the defaults. You will need to adapt these to suit your needs for a given dataset.
+Before fitting the models, we can tune the hyperparameter settings for each dataset. The `tuneRanger` package provides an efficient method for tuning forests fit with the `ranger` package.
 
-```{r crf_list}
-crf_list <- vector("list") # empty list to store our models
+```{r eval = F}
+library(tuneRanger)
+library(mlr)
+
+tune_df <- data.frame(matrix(NA, ncol = 5, nrow = 9))
+names(tune_df) <- c("mtry", "min.node.size", "sample.fraction", "auc", "exec.time")
+
+for (i in seq_along(data_list)){
+  d <- data_list[[i]][, all.vars(f1)]
+  pv_task <- makeClassifTask(data = d, target = "Response")
+  
+  # Tuning process (takes around 1 minute); Tuning measure is the Area Under the Curve
+  result <- tuneRanger(pv_task, measure = list(auc), num.trees = 1000, 
+                    num.threads = 4, iters = 80, show.info = F)
+  
+  tune_df[i,] <- result$recommended.pars
+}
+rownames(tune_df) <- names(data_list)
+```
+
+```{r echo = F}
+tune_df <- read.csv("data/tune_df.csv")
+```
+
+Now we loop over the datasets in `data_list` and apply the modeling function just like we did with the regression models. 
+
+```{r}
+library(ranger)
+rf_list <- vector("list")
 for (i in seq_along(data_list)){
   d <- data_list[[i]]
   # fit the random forest and add it to the list
-  crf_list[[i]] <- cforest(f1, d, controls = cforest_unbiased(ntree = 500, mtry = 3))
+  rf_list[[i]] <- ranger(
+    f1, 
+    data = d,
+    seed = 1234,
+    num.trees = 1000,
+    mtry = tune_df[i, "mtry"],
+    min.node.size = tune_df[i, "min.node.size"],
+    sample.fraction = tune_df[i, "sample.fraction"],
+    probability = TRUE,
+    importance = "permutation"
+    )
 }
-names(crf_list) <- names(data_list)
+names(rf_list) <- names(data_list)
 ```
 
 This gives us a list of random forests models similar to our list of regression models above.
 
-If for-loops aren't your style, you can use `lapply()` instead.  
-
-```{r crf_list2, cache = F, eval = F}
-crf_list <- lapply(data_list, 
-  FUN = function(d) cforest(f1, d, controls = cforest_unbiased(ntree = 500, mtry = 3)))
-```
-
-**WARNING**: Random forest objects can take a long time to run, and the resulting objects can be quite large, especially those generated with `party` (e.g. the `crf_list` above is 559 Mb in size. With 1000 trees it doubles to 1.1 Gb). Processing many forests with large numbers of trees can tax your CPU and RAM and slow down R's functioning. It's recommended that you save these objects to a file to be called as needed. 
+**WARNING**: Random forest objects can take a long time to run, and the resulting objects can be quite large, especially those generated with `party`. Processing many forests with large numbers of trees can tax your CPU and RAM and slow down R's functioning. It's recommended that you save these objects to a file to be called as needed. 
 
 ### Checking fits
 
 Before moving on, we should again check that the models fit the data well, and that we don't have any issues with collinearity or other signs of trouble. The `summary_stats()` function gives a subset of the statistics we saw before, mainly because random forest models don't provide us with these statistics. Additional arguments are also needed since model objects from some packages don't contain the necessary information.
 
 ```{r}
-summary_stats(crf_list, data_list, response = "Response") %>% 
+summary_stats(rf_list, data_list, response = "Response") %>% 
   round(3)
 ```
+
 This may also take some time with `party` models...
 
 ## Step 6
@@ -336,10 +367,10 @@ In this next step we look at the third line of evidence. We do this with the `va
 - `distance.matrix`: A distance matrix based on `rank.table`. For this function distances are measured by calculating the pairwise Spearman rank correlation coefficients and subtracting from 1.
 - `similarity.scores`: A table of mean similarity coeficients measured for each variety. These are equivalent to the Spearman rank correlations.
 
-We then loop over the list of random forests and calculate the variable importance rankings. For `party` forests we use the AUC based permutation importance, calculated with the `permimp()` function from the `permimp` package (with `AUC = TRUE`). With `party` forests we can also specify whether the rankings should be based on conditional importance scores, which are advised when there are many potentially correlated predictors [@Strobl2008]. Since conditional importance can take *much* longer to compute, we'll set it to `FALSE` (the default) here.
+We then loop over the list of random forests and calculate the variable importance rankings. For `ranger` forests, the importance scores are taken directly from the model objects. For `party` forests the package uses the AUC based permutation importance, calculated with the `permimp()` function from the `permimp` package (with `AUC = TRUE`). With `party` forests you can also specify whether the rankings should be based on conditional importance scores, which are advised when there are many potentially correlated predictors [@strobl_conditional_2008]. Since conditional importance can take *much* longer to compute, the default is set to `FALSE` (it is ignored with `ranger` forests).
 
 ```{r line3, cache=F}
-varimp_line <- vadis_line3(crf_list, path = FALSE, conditional = FALSE)
+varimp_line <- vadis_line3(rf_list, path = FALSE, conditional = FALSE)
 ```
 
 Look at the variable importance table.
@@ -384,7 +415,7 @@ mean_sims$mean <- rowMeans(mean_sims)
 round(mean_sims, 3)
 ```
 
-From this we can calculate a mean of the mean similarity scores. This is our **Core Grammar Coefficient** for particle placement across these varieties [@SzmrecsanyiInprep]
+From this we can calculate a mean of the mean similarity scores. This is our **Core Grammar Coefficient** for particle placement across these varieties [@szmrecsanyi_variationbased_2019]
 
 ```{r}
 mean(mean_sims$mean)
@@ -522,7 +553,7 @@ fused_mds[[1]] %>% # extract the coordinates
 
 ## NeighborNets
 
-NeighborNet is yet another technique for constructing and visualizing phylogenetic relationships. The method is similar to other agglomerative clustering methods, e.g. neighbor-joining algorithms, but allows for "conflicting" signals. These conflicting signals are realized as web-like reticulations which indicate that the data support several possible tree structures [see @Dunn2008].  
+NeighborNet is yet another technique for constructing and visualizing phylogenetic relationships. The method is similar to other agglomerative clustering methods, e.g. neighbor-joining algorithms, but allows for "conflicting" signals. These conflicting signals are realized as web-like reticulations which indicate that the data support several possible tree structures [see @dunn_structural_2008].  
 
 ```{r NNetplot, fig.height=6, fig.width=7}
 line2_NNet <- phangorn::neighborNet(coef_line$distance.matrix)
