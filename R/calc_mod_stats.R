@@ -21,8 +21,10 @@ calc_mod_stats <- function(mod, data = NULL, response = NULL){
     c.index <- (mean.rank - (n1 + 1)/2)/(n - n1)
     # Dxy <- 2 * (c.index - .05)
     maxVIF <- max(calc_VIF(mod))
-    if (class(mod)[1] %in% c("glm", "lm") & length(mod$x) == 0){
-      kappa <- NA
+    if (class(mod)[1] %in% c("glm", "lm")){
+      if(length(mod$x) == 0){
+        kappa <- NA
+      } else kappa <- calc_kappa(mod)
     } else kappa <- calc_kappa(mod)
     hoslem <- hosmerlem_test(mod)$p.value
     # put the output into a vector
