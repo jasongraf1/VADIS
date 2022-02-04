@@ -13,6 +13,7 @@
 #'
 #' @references Belsley, D. A. and Kuh, E. and Welsch, R. E. (1980) Regression Diagnostics. Identifying Influential Data and Sources of Collinearity, Wiley Series in Probability and Mathematical Statistics, New York.
 #'
+#'
 #' @examples
 #' \dontrun{
 #' set.seed(1)
@@ -23,7 +24,7 @@
 #' f  <- glm(y ~ x1 + x2 + x3, family = binomial, x = TRUE)
 #' calc_kappa(f)
 #' }
-calc_kappa <- function(mod){
+calc_kappa <- function(mod, data = NULL){
   # adaption of Baayen's collin.fnc() for compatibility with current version
   # of lme4 and R 3.4
   # require(languageR, quietly = T)
@@ -31,7 +32,8 @@ calc_kappa <- function(mod){
     data <- getME(mod, "X")
   } else if (class(mod)[1] %in% c("glm", "lm")) {
     data <- mod$x
-  }
+  } else
+
   std.fnc <- function(vec) (vec - mean(vec))/sqrt(var(vec))
   # New from R 3.4: Add as.vector() to avoid warning "Recycling array of
   # length 1 in vector array arithmetic is deprecated"
