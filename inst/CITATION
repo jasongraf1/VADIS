@@ -1,0 +1,15 @@
+citHeader("To cite VADIS in publications use:")
+
+citEntry(entry = "Manual",
+  title        = "{VADIS}: Variation-Based Distance & Similarity Modeling",
+  author       = personList(as.person("Jason Grafmiller")),
+  year         = "2022",
+  note         = "R package version 0.5.0",
+  url          = "https://github.com/jasongraf1/VADIS",
+
+  textVersion  =
+  paste("Grafmiller, Jason. (2022).",
+        "{VADIS}: Variation-Based Distance & Similarity Modeling.",
+        "R package version 0.5.0, ",
+        "URL: https://github.com/jasongraf1/VADIS.")
+)
