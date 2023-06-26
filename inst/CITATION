@@ -8,8 +8,8 @@ citEntry(entry = "Manual",
   url          = "https://github.com/jasongraf1/VADIS",
 
   textVersion  =
-  paste("Grafmiller, Jason. (2022).",
+  paste("Grafmiller, Jason. (2023).",
         "{VADIS}: Variation-Based Distance & Similarity Modeling.",
-        "R package version 0.5.0, ",
+        "R package version 1.0, ",
         "URL: https://github.com/jasongraf1/VADIS.")
 )
