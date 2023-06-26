@@ -90,7 +90,7 @@ vadis_line2 <- function(mod_list, path = NULL, weight = 1, scale = c("abs", "mea
     names(output_list) <- c("coef.table", "distance.matrix", "similarity.scores")
   }
 
-  if(path){
+  if(is.character(path)){
     if(overwrite == "yes"){
       saveRDS(output_list, file = path)
     } else if(overwrite == "no") {

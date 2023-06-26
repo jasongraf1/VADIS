@@ -76,7 +76,7 @@ vadis_line1 <- function(mod_list, path = NULL, alpha = .05, method = c("freq", "
     names(output_list) <- c("signif.table", "distance.matrix", "similarity.scores")
   }
 
-  if(path){
+  if(is.character(path)){
     if(overwrite == "yes"){
       saveRDS(output_list, file = path)
     } else if(overwrite == "no") {

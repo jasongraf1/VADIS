@@ -79,7 +79,7 @@ vadis_line3 <- function(mod_object, path = NULL, conditional = TRUE, overwrite =
                             "similarity.scores")
   }
 
-  if(path){
+  if(is.character(path)){
     if(overwrite == "yes"){
       saveRDS(output_list, file = path)
     } else if(overwrite == "no") {
