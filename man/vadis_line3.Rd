@@ -8,7 +8,7 @@ vadis_line3(
   mod_object,
   path = NULL,
   conditional = TRUE,
-  overwrite = c("no", "reload", "yes")
+  overwrite = c("reload", "no", "yes")
 )
 }
 \arguments{
@@ -18,7 +18,7 @@ vadis_line3(
 
 \item{conditional}{logical. Should conditional (default) or unconditional permutation variable importance be computed. Only applies to \code{RandomForest-class} models from the \code{\link[party]{party}} package.}
 
-\item{overwrite}{Should the function overwrite data to location in \code{path}? Default is \code{'no'}. If 'no', you will be asked to enter a new file location. Specify \code{path = 'reload'} to reload as existing file.}
+\item{overwrite}{Should the function overwrite data to location in \code{path}? Default is \code{'reload'}, which will load as existing file in \code{path}, and run the analysis if no file exists. If 'no' and the file exists, you will be asked to enter a new file location. Set \code{'yes'} to overwrite existing file.}
 }
 \value{
 A \code{list} of length 4.

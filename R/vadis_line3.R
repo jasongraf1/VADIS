@@ -3,7 +3,7 @@
 #' @param mod_object Either a list of random forest model objects, or a dataframe of variable importance scores, where rows represent predictors in the models and columns represent the varieties to compare.
 #' @param path Path in which to save the output as an R data file (\code{.rds}). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.
 #' @param conditional logical. Should conditional (default) or unconditional permutation variable importance be computed. Only applies to \code{RandomForest-class} models from the \code{\link[party]{party}} package.
-#' @param overwrite Should the function overwrite data to location in \code{path}? Default is \code{'no'}. If 'no', you will be asked to enter a new file location. Specify \code{path = 'reload'} to reload as existing file.
+#' @param overwrite Should the function overwrite data to location in \code{path}? Default is \code{'reload'}, which will load as existing file in \code{path}, and run the analysis if no file exists. If 'no' and the file exists, you will be asked to enter a new file location. Set \code{'yes'} to overwrite existing file.
 #'
 #' @author Jason Grafmiller
 #'
@@ -34,7 +34,7 @@
 #'
 #' line3 <- vadis_line3(rf_list, path = FALSE)
 #' }
-vadis_line3 <- function(mod_object, path = NULL, conditional = TRUE, overwrite = c("no", "reload", "yes")){
+vadis_line3 <- function(mod_object, path = NULL, conditional = TRUE, overwrite = c("reload", "no", "yes")){
 
   overwrite <- match.arg(overwrite)
 

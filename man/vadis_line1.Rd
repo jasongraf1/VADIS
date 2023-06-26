@@ -9,7 +9,7 @@ vadis_line1(
   path = NULL,
   alpha = 0.05,
   method = c("freq", "pd", "rope", "map"),
-  overwrite = c("no", "reload", "yes")
+  overwrite = c("reload", "no", "yes")
 )
 }
 \arguments{
@@ -21,7 +21,7 @@ vadis_line1(
 
 \item{method}{The method for calculating significance values. See details.}
 
-\item{overwrite}{Should the function overwrite data to location in \code{path}? Default is \code{'no'}. If 'no', you will be asked to enter a new file location. Specify \code{path = 'reload'} to reload as existing file.}
+\item{overwrite}{Should the function overwrite data to location in \code{path}? Default is \code{'reload'}, which will load as existing file in \code{path}, and run the analysis if no file exists. If 'no' and the file exists, you will be asked to enter a new file location. Set \code{'yes'} to overwrite existing file.}
 }
 \value{
 A \code{list} of length 3.

@@ -4,7 +4,7 @@
 #' @param path Path in which to save the output as an R data file (\code{.rds}). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.
 #' @param weight A numeric value indicating the size of the "effects" used for approximating the maximal reasonable distance. Default is 1.
 #' @param scale How should the distance matrix be scaled? See details
-#' @param overwrite Should the function overwrite data to location in \code{path}? Default is \code{'no'}. If 'no', you will be asked to enter a new file location. Specify \code{path = 'reload'} to reload as existing file.
+#' @param overwrite Should the function overwrite data to location in \code{path}? Default is \code{'reload'}, which will load as existing file in \code{path}, and run the analysis if no file exists. If 'no' and the file exists, you will be asked to enter a new file location. Set \code{'yes'} to overwrite existing file.
 #'
 #' @author Jason Grafmiller
 #'
@@ -44,7 +44,7 @@
 #'
 #' line2 <- vadis_line2(glm_list, path = FALSE)
 #' }
-vadis_line2 <- function(mod_list, path = NULL, weight = 1, scale = c("abs", "mean", "minmax", "none"), overwrite = c("no", "reload", "yes")){
+vadis_line2 <- function(mod_list, path = NULL, weight = 1, scale = c("abs", "mean", "minmax", "none"), overwrite = c("reload", "no",  "yes")){
 
   overwrite <- match.arg(overwrite)
 
