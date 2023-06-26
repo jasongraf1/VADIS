@@ -4,7 +4,12 @@
 \alias{vadis_line3}
 \title{Calculate the third line of evidence for the VADIS method}
 \usage{
-vadis_line3(mod_object, path = NULL, conditional = TRUE)
+vadis_line3(
+  mod_object,
+  path = NULL,
+  conditional = TRUE,
+  overwrite = c("no", "reload", "yes")
+)
 }
 \arguments{
 \item{mod_object}{Either a list of random forest model objects, or a dataframe of variable importance scores, where rows represent predictors in the models and columns represent the varieties to compare.}
@@ -12,6 +17,8 @@ vadis_line3(mod_object, path = NULL, conditional = TRUE)
 \item{path}{Path in which to save the output as an R data file (\code{.rds}). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.}
 
 \item{conditional}{logical. Should conditional (default) or unconditional permutation variable importance be computed. Only applies to \code{RandomForest-class} models from the \code{\link[party]{party}} package.}
+
+\item{overwrite}{Should the function overwrite data to location in \code{path}? Default is \code{'no'}. If 'no', you will be asked to enter a new file location. Specify \code{path = 'reload'} to reload as existing file.}
 }
 \value{
 A \code{list} of length 4.

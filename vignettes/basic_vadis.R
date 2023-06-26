@@ -13,7 +13,7 @@ knitr::opts_knit$set(
 ## ----libs, comment=F, message=FALSE, error=FALSE------------------------------
 library(tidyverse) # for data wrangling
 library(lme4) # for regression models
-library(party) # for random forests
+library(ranger) # for random forests
 library(permimp) # for conditional permutation importance
 library(phangorn) # for neighborNets
 
@@ -73,7 +73,7 @@ f2
 #  names(glmer_list) <- names(data_list)
 
 ## ----warning = F--------------------------------------------------------------
-summary_stats(glm_list) %>% 
+summary_stats(glm_list, data_list) %>% 
   round(3)
 
 ## -----------------------------------------------------------------------------
@@ -126,141 +126,49 @@ d
 #  vadis_line2(glm_list, weight = 2, path = FALSE)$distance.matrix %>%
 #    round(3)
 
-## ----crf_list-----------------------------------------------------------------
-crf_list <- vector("list") # empty list to store our models
+## ----eval = F-----------------------------------------------------------------
+#  library(tuneRanger)
+#  library(mlr)
+#  
+#  tune_df <- data.frame(matrix(NA, ncol = 5, nrow = 9))
+#  names(tune_df) <- c("mtry", "min.node.size", "sample.fraction", "auc", "exec.time")
+#  
+#  for (i in seq_along(data_list)){
+#    d <- data_list[[i]][, all.vars(f1)]
+#    pv_task <- makeClassifTask(data = d, target = "Response")
+#  
+#    # Tuning process (takes around 1 minute); Tuning measure is the Area Under the Curve
+#    result <- tuneRanger(pv_task, measure = list(auc), num.trees = 1000,
+#                      num.threads = 4, iters = 80, show.info = F)
+#  
+#    tune_df[i,] <- result$recommended.pars
+#  }
+#  rownames(tune_df) <- names(data_list)
+
+## ----echo = F-----------------------------------------------------------------
+tune_df <- read.csv("data/tune_df.csv")
+
+## -----------------------------------------------------------------------------
+library(ranger)
+rf_list <- vector("list")
 for (i in seq_along(data_list)){
   d <- data_list[[i]]
   # fit the random forest and add it to the list
-  crf_list[[i]] <- cforest(f1, d, controls = cforest_unbiased(ntree = 500, mtry = 3))
+  rf_list[[i]] <- ranger(
+    f1, 
+    data = d,
+    seed = 1234,
+    num.trees = 1000,
+    mtry = tune_df[i, "mtry"],
+    min.node.size = tune_df[i, "min.node.size"],
+    sample.fraction = tune_df[i, "sample.fraction"],
+    probability = TRUE,
+    importance = "permutation"
+    )
 }
-names(crf_list) <- names(data_list)
-
-## ----crf_list2, cache = F, eval = F-------------------------------------------
-#  crf_list <- lapply(data_list,
-#    FUN = function(d) cforest(f1, d, controls = cforest_unbiased(ntree = 500, mtry = 3)))
+names(rf_list) <- names(data_list)
 
 ## -----------------------------------------------------------------------------
-summary_stats(crf_list, data_list, response = "Response") %>% 
+summary_stats(rf_list, data_list, response = "Response") %>% 
   round(3)
-
-## ----line3, cache=F-----------------------------------------------------------
-varimp_line <- vadis_line3(crf_list, path = FALSE, conditional = FALSE)
-
-## -----------------------------------------------------------------------------
-varimp_line$varimp.table %>% 
-  round(3)
-
-## -----------------------------------------------------------------------------
-varimp_line$rank.table
-
-## -----------------------------------------------------------------------------
-varimp_line$distance.matrix %>% 
-  round(3)
-
-## -----------------------------------------------------------------------------
-varimp_line$similarity.scores %>% 
-  arrange(desc(Similarity))
-
-## -----------------------------------------------------------------------------
-mean_sims <- data.frame(
-  line1 = signif_line$similarity.scores[,1], # get only the values in the 2nd column
-  line2 = coef_line$similarity.scores[,1],
-  line3 = varimp_line$similarity.scores[,1],
-  row.names = names(data_list)
-)
-mean_sims$mean <- rowMeans(mean_sims)
-round(mean_sims, 3)
-
-## -----------------------------------------------------------------------------
-mean(mean_sims$mean)
-
-## -----------------------------------------------------------------------------
-fused_dist <- analogue::fuse(signif_line$distance.matrix, 
-                             coef_line$distance.matrix, 
-                             varimp_line$distance.matrix)
-round(fused_dist, 3)
-
-## ----hclustplot, fig.height=6, fig.width=7------------------------------------
-# Use the 2nd line of evidence
-line2_clust <- hclust(coef_line$distance.matrix, method = "ward.D2")
-plot(line2_clust, main = "Hierarchical clustering of line 2 distances")
-
-## ----fig.height=6, fig.width=7------------------------------------------------
-hclust(fused_dist, method = "ward.D2") %>% 
-  plot(main = "Hierarchical clustering of fused distances")
-
-## ----fig.height=6, fig.width=8, caption = "Clustering methods for Line 2 distances"----
-par(mfrow = c(1,2))
-cluster::diana(coef_line$distance.matrix) %>% 
-  cluster::pltree(main = "Divisive clustering")
-ape::nj(coef_line$distance.matrix) %>% 
-  plot(type = "u", main = "Unrooted clustering")
-
-## ----fig.height=6, fig.width=8, caption = "Clustering methods for fused distances from all three Lines"----
-par(mfrow = c(1,2))
-cluster::diana(fused_dist) %>% 
-  cluster::pltree(main = "Divisive clustering")
-ape::nj(fused_dist) %>% 
-  plot(type = "u", main = "Unrooted clustering")
-
-## -----------------------------------------------------------------------------
-line2_mds <- cmdscale(coef_line$distance.matrix, k = 3, eig = T) 
-
-## ----mdsplot, fig.height=6, fig.width=7---------------------------------------
-line2_mds[[1]] %>%
-  as.data.frame() %>% 
-  mutate(genres = rownames(.)) %>% 
-  ggplot(aes(V1, V2, label = genres)) +
-  geom_point() +
-  geom_text(nudge_y = .01, size = 4)
-
-## ----fig.height=6, fig.width=7------------------------------------------------
-dd <- line2_mds[[1]] %>%
-  as.data.frame() 
-library(scatterplot3d)
-with(dd, {
-  scttr <- scatterplot3d(x = V1, y = V2, z = V3, type = "h", pch = 18)
-  scttr_coords <- scttr$xyz.convert(V1, V2, V3)
-  text(scttr_coords$x, scttr_coords$y, labels = rownames(dd), pos = 3)
-  })
-
-## ----fig.height=6, fig.width=7, caption = "3D plot of Line 2 based MDS"-------
-library(plotly)
-dd %>% 
-  rownames_to_column("Variety") %>% 
-  plot_ly() %>%
-  add_trace(x = ~V1, y = ~V2, z = ~V3,
-            type = "scatter3d", inherit = F,
-            marker = list(size = 4),
-            mode = "markers") %>%
-  add_text(x = ~V1, y = ~V2, z = ~V3,
-           text = ~ Variety,
-           type = "scatter3d",
-           mode = "markers",
-           showlegend = FALSE)
-
-## ----fig.height=6, fig.width=7, caption = "3D plot of fused distances MDS"----
-fused_mds <- cmdscale(fused_dist, k = 3, eig = T)
-
-fused_mds[[1]] %>% # extract the coordinates
-  as.data.frame() %>% 
-  rownames_to_column("Variety") %>%
-  plot_ly() %>%
-  add_trace(x = ~V1, y = ~V2, z = ~V3,
-            type = "scatter3d", inherit = F,
-            marker = list(size = 4),
-            mode = "markers") %>%
-  add_text(x = ~V1, y = ~V2, z = ~V3,
-           text = ~ Variety,
-           type = "scatter3d",
-           mode = "markers",
-           showlegend = FALSE)
-
-## ----NNetplot, fig.height=6, fig.width=7--------------------------------------
-line2_NNet <- phangorn::neighborNet(coef_line$distance.matrix)
-plot(line2_NNet, "2D")
-
-## ----NNetplot2, fig.height=6, fig.width=7-------------------------------------
-phangorn::neighborNet(fused_dist) %>% 
-  plot("2D")
 

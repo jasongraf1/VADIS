@@ -8,7 +8,8 @@ vadis_line2(
   mod_list,
   path = NULL,
   weight = 1,
-  scale = c("abs", "mean", "minmax", "none")
+  scale = c("abs", "mean", "minmax", "none"),
+  overwrite = c("no", "reload", "yes")
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ vadis_line2(
 \item{weight}{A numeric value indicating the size of the "effects" used for approximating the maximal reasonable distance. Default is 1.}
 
 \item{scale}{How should the distance matrix be scaled? See details}
+
+\item{overwrite}{Should the function overwrite data to location in \code{path}? Default is \code{'no'}. If 'no', you will be asked to enter a new file location. Specify \code{path = 'reload'} to reload as existing file.}
 }
 \value{
 A \code{list} of length 3.

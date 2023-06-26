@@ -8,7 +8,8 @@ vadis_line1(
   mod_list,
   path = NULL,
   alpha = 0.05,
-  method = c("freq", "pd", "rope", "map")
+  method = c("freq", "pd", "rope", "map"),
+  overwrite = c("no", "reload", "yes")
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ vadis_line1(
 \item{alpha}{The significance threshold. Default is .05}
 
 \item{method}{The method for calculating significance values. See details.}
+
+\item{overwrite}{Should the function overwrite data to location in \code{path}? Default is \code{'no'}. If 'no', you will be asked to enter a new file location. Specify \code{path = 'reload'} to reload as existing file.}
 }
 \value{
 A \code{list} of length 3.

@@ -4,6 +4,7 @@
 #' @param path Path in which to save the output as an R data file (\code{.rds}). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.
 #' @param weight A numeric value indicating the size of the "effects" used for approximating the maximal reasonable distance. Default is 1.
 #' @param scale How should the distance matrix be scaled? See details
+#' @param overwrite Should the function overwrite data to location in \code{path}? Default is \code{'no'}. If 'no', you will be asked to enter a new file location. Specify \code{path = 'reload'} to reload as existing file.
 #'
 #' @author Jason Grafmiller
 #'
@@ -43,45 +44,65 @@
 #'
 #' line2 <- vadis_line2(glm_list, path = FALSE)
 #' }
-vadis_line2 <- function(mod_list, path = NULL, weight = 1, scale = c("abs", "mean", "minmax", "none")){
-  output_list <- vector("list")
-  raw_tab <- create_coef_table(mod_list) # call function to create varimp rankings
-  output_list[[1]] <- raw_tab
+vadis_line2 <- function(mod_list, path = NULL, weight = 1, scale = c("abs", "mean", "minmax", "none"), overwrite = c("no", "reload", "yes")){
 
-  dist_mat <- dist(t(raw_tab[-1,]), method = "euclidean") # leave out the intercept
-
-  if (match.arg(scale) == "abs"){
-    # get the maximum reasonable distance
-    dmy <- data.frame(a = sample(c(weight,-weight), size = nrow(raw_tab[-1,]), replace = T))
-    dmy$b <- -dmy$a # exact opposite of a
-    maxD <- max(dist(t(dmy), "euclidean"))
-    out_dist <- dist_mat/maxD
-  } else if (match.arg(scale) == "minmax"){
-    out_dist <- minmax(dist_mat)
-  } else if (match.arg(scale) == "mean"){
-    out_dist <- (dist_mat - mean(dist_mat))/(max(dist_mat) - min(dist_mat))
-  } else {
-    out_dist <- dist_mat
-  }
-
-  # Now normalize all distances to the maximum reasonable distance
-  weighted_dist <- as.matrix(out_dist)
-  diag(weighted_dist) <- NA # remove diagonals before calculating means
-  means <- colMeans(weighted_dist, na.rm = T)
-  sim_tab <- data.frame(Similarity = 1 - means)
-  rownames(sim_tab) <- names(mod_list)
-
-  # save normalized distances to output
-  output_list[[2]] <- out_dist
-  output_list[[3]] <- as.data.frame(sim_tab)
-
-  names(output_list) <- c("coef.table", "distance.matrix", "similarity.scores")
+  overwrite <- match.arg(overwrite)
 
   if (is.null(path)) {
     path <- paste0(getwd(), "/vadis_line2_output_", format(Sys.time(), "%Y-%b-%d_%H-%M"), ".rds")
-    saveRDS(output_list, file = path) }
-  else if (is.character(path)) {
-    saveRDS(output_list, file = path)
+    }
+
+  if(overwrite == "reload" & file.exists(path)){
+    # reload from existing file
+    output_list <- readRDS(path)
+  } else {
+    output_list <- vector("list")
+    raw_tab <- create_coef_table(mod_list) # call function to create varimp rankings
+    output_list[[1]] <- raw_tab
+
+    dist_mat <- dist(t(raw_tab[-1,]), method = "euclidean") # leave out the intercept
+
+    if (match.arg(scale) == "abs"){
+      # get the maximum reasonable distance
+      dmy <- data.frame(a = sample(c(weight,-weight), size = nrow(raw_tab[-1,]), replace = T))
+      dmy$b <- -dmy$a # exact opposite of a
+      maxD <- max(dist(t(dmy), "euclidean"))
+      out_dist <- dist_mat/maxD
+    } else if (match.arg(scale) == "minmax"){
+      out_dist <- minmax(dist_mat)
+    } else if (match.arg(scale) == "mean"){
+      out_dist <- (dist_mat - mean(dist_mat))/(max(dist_mat) - min(dist_mat))
+    } else {
+      out_dist <- dist_mat
+    }
+
+    # Now normalize all distances to the maximum reasonable distance
+    weighted_dist <- as.matrix(out_dist)
+    diag(weighted_dist) <- NA # remove diagonals before calculating means
+    means <- colMeans(weighted_dist, na.rm = T)
+    sim_tab <- data.frame(Similarity = 1 - means)
+    rownames(sim_tab) <- names(mod_list)
+
+    # save normalized distances to output
+    output_list[[2]] <- out_dist
+    output_list[[3]] <- as.data.frame(sim_tab)
+
+    names(output_list) <- c("coef.table", "distance.matrix", "similarity.scores")
   }
+
+  if(path){
+    if(overwrite == "yes"){
+      saveRDS(output_list, file = path)
+    } else if(overwrite == "no") {
+      msg <- paste("File", path, "already exists. Overwrite (y/n)?: ")
+      over <- readlines(prompt = msg)
+      if(over == "y") {
+        saveRDS(output_list, file = path)
+      } else {
+        new_path <- readlines(prompt = "Please enter new file path:")
+        saveRDS(output_list, file = new_path)
+      }
+    }}
+
   return (output_list)
 }

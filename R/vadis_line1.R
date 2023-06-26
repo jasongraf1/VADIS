@@ -4,6 +4,7 @@
 #' @param path Path in which to save the output as an R data file (\code{.rds}). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.
 #' @param alpha The significance threshold. Default is .05
 #' @param method The method for calculating significance values. See details.
+#' @param overwrite Should the function overwrite data to location in \code{path}? Default is \code{'no'}. If 'no', you will be asked to enter a new file location. Specify \code{path = 'reload'} to reload as existing file.
 #'
 #' @author Jason Grafmiller
 #'
@@ -41,34 +42,54 @@
 #'
 #' line1 <- vadis_line1(glm_list, path = FALSE)
 #' }
-vadis_line1 <- function(mod_list, path = NULL, alpha = .05, method = c("freq", "pd", "rope", "map")){
+vadis_line1 <- function(mod_list, path = NULL, alpha = .05, method = c("freq", "pd", "rope", "map"), overwrite = c("no", "reload", "yes")){
 
-  output_list <- vector("list")
-  raw_tab <- create_signif_table(mod_list, alpha = alpha, method = method[1])
-  output_list[[1]] <- raw_tab
-
-  dist_mat <- dist(t(raw_tab[-1,]), method = "euclidean")^2 # omit intercept
-
-  output_list[[2]] <- dist_mat/nrow(raw_tab[-1,]) # normalize by number of constraints
-
-  dist_mat2 <- (nrow(raw_tab[-1,]) - dist_mat)/nrow(raw_tab[-1,])
-
-  sim_dist <- as.matrix(dist_mat2)
-  diag(sim_dist) <- NA # remove diagonals before calculating means
-  means <- colMeans(sim_dist, na.rm = T)
-  sim_tab <- data.frame(Similarity = means)
-  rownames(sim_tab) <- names(mod_list)
-
-  output_list[[3]] <- as.data.frame(sim_tab)
-
-  names(output_list) <- c("signif.table", "distance.matrix", "similarity.scores")
+  p_method <- match.arg(method)
+  overwrite <- match.arg(overwrite)
 
   if (is.null(path)) {
-    path <- paste0(getwd(), "/vadis_line2_output_", format(Sys.time(), "%Y-%b-%d_%H-%M"), ".rds")
-    saveRDS(output_list, file = path) }
-  else if (is.character(path)) {
-    saveRDS(output_list, file = path)
+    path <- paste0(getwd(), "/vadis_line1_output_", format(Sys.time(), "%Y-%b-%d_%H-%M"), ".rds")
+    }
+
+  if(overwrite == "reload" & file.exists(path)){
+    # reload from existing file
+    output_list <- readRDS(path)
+  } else {
+    output_list <- vector("list")
+    raw_tab <- create_signif_table(mod_list, alpha = alpha, method = p_method)
+    output_list[[1]] <- raw_tab
+
+    dist_mat <- dist(t(raw_tab[-1,]), method = "euclidean")^2 # omit intercept
+
+    output_list[[2]] <- dist_mat/nrow(raw_tab[-1,]) # normalize by number of constraints
+
+    dist_mat2 <- (nrow(raw_tab[-1,]) - dist_mat)/nrow(raw_tab[-1,])
+
+    sim_dist <- as.matrix(dist_mat2)
+    diag(sim_dist) <- NA # remove diagonals before calculating means
+    means <- colMeans(sim_dist, na.rm = T)
+    sim_tab <- data.frame(Similarity = means)
+    rownames(sim_tab) <- names(mod_list)
+
+    output_list[[3]] <- as.data.frame(sim_tab)
+
+    names(output_list) <- c("signif.table", "distance.matrix", "similarity.scores")
   }
+
+  if(path){
+    if(overwrite == "yes"){
+      saveRDS(output_list, file = path)
+    } else if(overwrite == "no") {
+      msg <- paste("File", path, "already exists. Overwrite (y/n)?: ")
+      over <- readlines(prompt = msg)
+      if(over == "y") {
+        saveRDS(output_list, file = path)
+      } else {
+        new_path <- readlines(prompt = "Please enter new file path:")
+        saveRDS(output_list, file = new_path)
+      }
+    }}
+
   return (output_list)
 }
 
