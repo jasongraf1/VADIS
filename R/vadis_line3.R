@@ -42,7 +42,39 @@ vadis_line3 <- function(mod_object, path = NULL, conditional = TRUE, overwrite =
     path <- paste0(getwd(), "/vadis_line3_output_", format(Sys.time(), "%Y-%b-%d_%H-%M"), ".rds")
     }
 
-  if(overwrite == "reload" & file.exists(path)){
+  if(path == FALSE){
+    output_list <- vector("list")
+    if (is.data.frame(mod_object) || is.matrix(mod_object)){
+      raw_tab <- mod_object
+    } else if (is.list(mod_object)){
+      raw_tab <- create_rank_table(mod_object, conditional = conditional) # call function to create varimp rankings
+    } else {
+      stop(paste("Function does not work with objects of class", class(mod_object)[1]))
+    }
+
+    output_list[[1]] <- raw_tab
+
+    rank_tab <- as.data.frame(apply(raw_tab, 2, function(x) rank(-x)))
+    rownames(rank_tab) <- rownames(raw_tab)
+    output_list[[2]] <- rank_tab
+
+    cor_mat <- cor(raw_tab, method = "spearman")
+    dist_mat <- 1 - cor_mat
+
+    output_list[[3]] <- as.dist(dist_mat)
+
+    diag(cor_mat) <- NA
+    means <- colMeans(cor_mat, na.rm = T)
+    sim_tab <- data.frame(Similarity = means)
+    rownames(sim_tab) <- names(mod_object)
+
+    output_list[[4]] <- sim_tab
+
+    names(output_list) <- c("varimp.table",
+                            "rank.table",
+                            "distance.matrix",
+                            "similarity.scores")
+  } else if(overwrite == "reload" & file.exists(path)){
     # reload from existing file
     output_list <- readRDS(path)
   } else {

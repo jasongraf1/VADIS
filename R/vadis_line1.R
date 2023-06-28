@@ -51,7 +51,27 @@ vadis_line1 <- function(mod_list, path = NULL, alpha = .05, method = c("freq", "
     path <- paste0(getwd(), "/vadis_line1_output_", format(Sys.time(), "%Y-%b-%d_%H-%M"), ".rds")
     }
 
-  if(overwrite == "reload" & file.exists(path)){
+  if(path == FALSE){
+    output_list <- vector("list")
+    raw_tab <- create_signif_table(mod_list, alpha = alpha, method = p_method)
+    output_list[[1]] <- raw_tab
+
+    dist_mat <- dist(t(raw_tab[-1,]), method = "euclidean")^2 # omit intercept
+
+    output_list[[2]] <- dist_mat/nrow(raw_tab[-1,]) # normalize by number of constraints
+
+    dist_mat2 <- (nrow(raw_tab[-1,]) - dist_mat)/nrow(raw_tab[-1,])
+
+    sim_dist <- as.matrix(dist_mat2)
+    diag(sim_dist) <- NA # remove diagonals before calculating means
+    means <- colMeans(sim_dist, na.rm = T)
+    sim_tab <- data.frame(Similarity = means)
+    rownames(sim_tab) <- names(mod_list)
+
+    output_list[[3]] <- as.data.frame(sim_tab)
+
+    names(output_list) <- c("signif.table", "distance.matrix", "similarity.scores")
+  } else if(overwrite == "reload" & file.exists(path)){
     # reload from existing file
     output_list <- readRDS(path)
   } else {

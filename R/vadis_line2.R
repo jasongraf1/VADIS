@@ -52,7 +52,40 @@ vadis_line2 <- function(mod_list, path = NULL, weight = 1, scale = c("abs", "mea
     path <- paste0(getwd(), "/vadis_line2_output_", format(Sys.time(), "%Y-%b-%d_%H-%M"), ".rds")
     }
 
-  if(overwrite == "reload" & file.exists(path)){
+  if(path == FALSE){
+    output_list <- vector("list")
+    raw_tab <- create_coef_table(mod_list) # call function to create varimp rankings
+    output_list[[1]] <- raw_tab
+
+    dist_mat <- dist(t(raw_tab[-1,]), method = "euclidean") # leave out the intercept
+
+    if (match.arg(scale) == "abs"){
+      # get the maximum reasonable distance
+      dmy <- data.frame(a = sample(c(weight,-weight), size = nrow(raw_tab[-1,]), replace = T))
+      dmy$b <- -dmy$a # exact opposite of a
+      maxD <- max(dist(t(dmy), "euclidean"))
+      out_dist <- dist_mat/maxD
+    } else if (match.arg(scale) == "minmax"){
+      out_dist <- minmax(dist_mat)
+    } else if (match.arg(scale) == "mean"){
+      out_dist <- (dist_mat - mean(dist_mat))/(max(dist_mat) - min(dist_mat))
+    } else {
+      out_dist <- dist_mat
+    }
+
+    # Now normalize all distances to the maximum reasonable distance
+    weighted_dist <- as.matrix(out_dist)
+    diag(weighted_dist) <- NA # remove diagonals before calculating means
+    means <- colMeans(weighted_dist, na.rm = T)
+    sim_tab <- data.frame(Similarity = 1 - means)
+    rownames(sim_tab) <- names(mod_list)
+
+    # save normalized distances to output
+    output_list[[2]] <- out_dist
+    output_list[[3]] <- as.data.frame(sim_tab)
+
+    names(output_list) <- c("coef.table", "distance.matrix", "similarity.scores")
+  } else if(overwrite == "reload" & file.exists(path)){
     # reload from existing file
     output_list <- readRDS(path)
   } else {
