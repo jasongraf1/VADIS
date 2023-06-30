@@ -36,7 +36,7 @@ create_signif_table <- function(mod_list, alpha = .05, method = c("freq", "pd", 
                      significance = ifelse(p_ROPE < alpha/2, 1, 0)
                    ) %>%
                    pull(significance)
-                 names(sig) <- rownames(as.data.frame(summary(m)$fixed))
+                 names(sig) <- rownames(fixef(m))
                  return(sig)
                }))
     } else if (method[1] == "pd"){
@@ -49,7 +49,7 @@ create_signif_table <- function(mod_list, alpha = .05, method = c("freq", "pd", 
                      significance = ifelse(pd > (1 - alpha/2), 1, 0)
                    ) %>%
                    pull(significance)
-                 names(sig) <- rownames(as.data.frame(summary(m)$fixed))
+                 names(sig) <- rownames(fixef(m))
                  return(sig)
                }))
     } else if (method[1] == "map"){
@@ -62,7 +62,7 @@ create_signif_table <- function(mod_list, alpha = .05, method = c("freq", "pd", 
                      significance = ifelse(p_MAP < alpha, 1, 0)
                    ) %>%
                    pull(significance)
-                 names(sig) <- rownames(as.data.frame(summary(m)$fixed))
+                 names(sig) <- rownames(fixef(m))
                  return(sig)
                }))
     } else {
@@ -72,13 +72,13 @@ create_signif_table <- function(mod_list, alpha = .05, method = c("freq", "pd", 
                  fixed <- brms::posterior_interval(
                    m,
                    prob = 1 - alpha,
-                   pars = "^b_"
+                   variable = paste0("b_", rownames(fixef(m)))
                  )
                  fixed
                  sig <- rep(0, nrow(fixed))
                  sig[fixed[, 1] > 0 & fixed[, 2] > 0] <- 1
                  sig[fixed[, 1] < 0 & fixed[, 2] < 0] <- 1
-                 names(sig) <- rownames(summary(m)$fixed)
+                 names(sig) <- rownames(fixef(m))
                  return(sig)
                }))
     }
