@@ -1,6 +1,6 @@
 Package: VADIS
 Title: Variation-Based Distance & Similarity Modeling
-Version: 1.0
+Version: 1.0.1
 Authors@R: person("Jason", "Grafmiller", email = "j.grafmiller@bham.ac.uk", role = c("aut", "cre"))
 Description: Provides functions for computing the three lines of evidence used in the VADIS method. Includes vignette illustrating how to use the package.
 Depends: R (>= 3.5.1)
