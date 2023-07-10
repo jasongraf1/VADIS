@@ -9,7 +9,7 @@ vadis_line2(
   path = NULL,
   weight = 1,
   scale = c("abs", "mean", "minmax", "none"),
-  overwrite = c("reload", "no", "yes")
+  overwrite = c("no", "yes", "reload")
 )
 }
 \arguments{
@@ -21,7 +21,7 @@ vadis_line2(
 
 \item{scale}{How should the distance matrix be scaled? See details}
 
-\item{overwrite}{Should the function overwrite data to location in \code{path}? Default is \code{'reload'}, which will load as existing file in \code{path}, and run the analysis if no file exists. If 'no' and the file exists, you will be asked to enter a new file location. Set \code{'yes'} to overwrite existing file.}
+\item{overwrite}{Should the function overwrite data to location in \code{path}? Default is \code{'no'}, which will run the analysis if no file exists. If file in \code{path} exists, user with be prompted to set new path or allow file to be overwritten. Set to \code{'yes'} to automatically overwrite existing file, and \code{'reload'} to automatically reload existing file.}
 }
 \value{
 A \code{list} of length 3.

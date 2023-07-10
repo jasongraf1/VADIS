@@ -4,7 +4,7 @@
 #' @param path Path in which to save the output as an R data file (\code{.rds}). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.
 #' @param weight A numeric value indicating the size of the "effects" used for approximating the maximal reasonable distance. Default is 1.
 #' @param scale How should the distance matrix be scaled? See details
-#' @param overwrite Should the function overwrite data to location in \code{path}? Default is \code{'reload'}, which will load as existing file in \code{path}, and run the analysis if no file exists. If 'no' and the file exists, you will be asked to enter a new file location. Set \code{'yes'} to overwrite existing file.
+#' @param overwrite Should the function overwrite data to location in \code{path}? Default is \code{'no'}, which will run the analysis if no file exists. If file in \code{path} exists, user with be prompted to set new path or allow file to be overwritten. Set to \code{'yes'} to automatically overwrite existing file, and \code{'reload'} to automatically reload existing file.
 #'
 #' @author Jason Grafmiller
 #'
@@ -44,7 +44,7 @@
 #'
 #' line2 <- vadis_line2(glm_list, path = FALSE)
 #' }
-vadis_line2 <- function(mod_list, path = NULL, weight = 1, scale = c("abs", "mean", "minmax", "none"), overwrite = c("reload", "no",  "yes")){
+vadis_line2 <- function(mod_list, path = NULL, weight = 1, scale = c("abs", "mean", "minmax", "none"), overwrite = c("no",  "yes", "reload")){
 
   overwrite <- match.arg(overwrite)
 
@@ -87,6 +87,7 @@ vadis_line2 <- function(mod_list, path = NULL, weight = 1, scale = c("abs", "mea
     names(output_list) <- c("coef.table", "distance.matrix", "similarity.scores")
   } else if(overwrite == "reload" & file.exists(path)){
     # reload from existing file
+    message(paste("Loading existing file", path, "\nSet `overwrite = 'yes' or choose new path to calculate new values."))
     output_list <- readRDS(path)
   } else {
     output_list <- vector("list")
@@ -125,16 +126,19 @@ vadis_line2 <- function(mod_list, path = NULL, weight = 1, scale = c("abs", "mea
 
   if(is.character(path)){
     if(overwrite == "yes"){
+      if(file.exists(path)) message("Existing file", path, "will be overwritten. Set overwrite = 'reload' to reload existing file.")
       saveRDS(output_list, file = path)
-    } else if(overwrite == "no") {
+    } else if(overwrite == "no" & file.exists(path)) {
       msg <- paste("File", path, "already exists. Overwrite (y/n)?: ")
-      over <- readlines(prompt = msg)
+      over <- readline(prompt = msg)
       if(over == "y") {
         saveRDS(output_list, file = path)
       } else {
-        new_path <- readlines(prompt = "Please enter new file path:")
+        new_path <- readline(prompt = "Please enter new file path:")
         saveRDS(output_list, file = new_path)
       }
+    } else {
+      saveRDS(output_list, file = path)
     }}
 
   return (output_list)
