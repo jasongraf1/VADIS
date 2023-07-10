@@ -47,6 +47,10 @@ vadis_line3 <- function(mod_object, path = NULL, conditional = TRUE, overwrite =
     if (is.data.frame(mod_object) || is.matrix(mod_object)){
       raw_tab <- mod_object
     } else if (is.list(mod_object)){
+      if(conditional == TRUE & class(mod_list[[1]]) != "RandomForest"){
+        conditional <- FALSE
+        message("Conditional variable importances are only available for {party} random forests. Setting conditional = FALSE")
+      }
       raw_tab <- create_rank_table(mod_object, conditional = conditional) # call function to create varimp rankings
     } else {
       stop(paste("Function does not work with objects of class", class(mod_object)[1]))
