@@ -58,7 +58,7 @@ vadis_line3 <- function(mod_object, path = NULL, conditional = TRUE, overwrite =
 
     output_list[[1]] <- raw_tab
 
-    rank_tab <- as.data.frame(apply(raw_tab, 2, function(x) rank(-x)))
+    rank_tab <- as.data.frame(apply(raw_tab, 2, function(x) rank(-x, ties.method = "min")))
     rownames(rank_tab) <- rownames(raw_tab)
     output_list[[2]] <- rank_tab
 
