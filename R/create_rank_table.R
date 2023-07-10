@@ -36,8 +36,8 @@ create_rank_table <- function(mod_list, conditional = TRUE) {
     varimp_tab <- as.data.frame(do.call("cbind", lapply(mod_list, FUN = function(m) ranger::importance(m))))
   } else if (type[1] == "RandomForest"){
     if (conditional){
-      cat(paste("Computing conditional variable importance for", length(mod_list), "models. This may take some time...\nIf it takes too long, consider setting `conditional = FALSE`."))
-    } else cat(paste("Computing variable importance for", length(mod_list), "models. This may take some time...\n"))
+      message(paste("Computing conditional variable importance for", length(mod_list), "models. This may take some time...\nIf it takes too long, consider setting `conditional = FALSE`."))
+    } else message(paste("Computing variable importance for", length(mod_list), "models. This may take some time...\n"))
     varimp_list <- lapply(
       mod_list,
       FUN = function(m) {
