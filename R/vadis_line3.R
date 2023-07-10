@@ -47,7 +47,7 @@ vadis_line3 <- function(mod_object, path = NULL, conditional = TRUE, overwrite =
     if (is.data.frame(mod_object) || is.matrix(mod_object)){
       raw_tab <- mod_object
     } else if (is.list(mod_object)){
-      if(conditional == TRUE & class(mod_list[[1]]) != "RandomForest"){
+      if(conditional == TRUE & class(mod_object[[1]]) != "RandomForest"){
         conditional <- FALSE
         message("Conditional variable importances are only available for {party} random forests. Setting conditional = FALSE")
       }
