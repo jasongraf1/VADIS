@@ -5,6 +5,7 @@
 #' @param alpha The significance threshold. Default is .05
 #' @param method The method for calculating significance values. See details.
 #' @param overwrite Should the function overwrite data to location in \code{path}? Default is \code{'no'}, which will run the analysis if no file exists. If file in \code{path} exists, user with be prompted to set new path or allow file to be overwritten. Set to \code{'yes'} to automatically overwrite existing file, and \code{'reload'} to automatically reload existing file.
+#' @param verbose Should messages be printed? Default is \code{FALSE}
 #'
 #' @author Jason Grafmiller
 #'
@@ -42,7 +43,7 @@
 #'
 #' line1 <- vadis_line1(glm_list, path = FALSE)
 #' }
-vadis_line1 <- function(mod_list, path = NULL, alpha = .05, method = c("freq", "pd", "rope", "map"), overwrite = c("no", "yes",  "reload")){
+vadis_line1 <- function(mod_list, path = NULL, alpha = .05, method = c("freq", "pd", "rope", "map"), overwrite = c("no", "yes",  "reload"), verbose = FALSE){
 
   p_method <- match.arg(method)
   overwrite <- match.arg(overwrite)
@@ -73,7 +74,7 @@ vadis_line1 <- function(mod_list, path = NULL, alpha = .05, method = c("freq", "
     names(output_list) <- c("signif.table", "distance.matrix", "similarity.scores")
   } else if(overwrite == "reload" & file.exists(path)){
     # reload from existing file
-    message(paste("Loading existing file", path, "\nSet `overwrite = 'yes' or choose new path to calculate new values."))
+    if(verbose) message(paste("Loading existing file", path, "\nSet `overwrite = 'yes' or choose new path to calculate new values."))
     output_list <- readRDS(path)
   } else {
     output_list <- vector("list")
@@ -99,7 +100,7 @@ vadis_line1 <- function(mod_list, path = NULL, alpha = .05, method = c("freq", "
 
   if(is.character(path)){
     if(overwrite == "yes"){
-      if(file.exists(path)) message("Existing file", path, "will be overwritten. Set `overwrite = 'reload'` to reload existing file.")
+      if(file.exists(path) & verbose == TRUE) message("Existing file", path, "will be overwritten. Set `overwrite = 'reload'` to reload existing file.")
       saveRDS(output_list, file = path)
     } else if(overwrite == "no" & file.exists(path)) {
       msg <- paste("File", path, "already exists. Overwrite (y/n)?: ")

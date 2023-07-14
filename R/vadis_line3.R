@@ -4,6 +4,7 @@
 #' @param path Path in which to save the output as an R data file (\code{.rds}). If \code{NULL}, defaults to the current working directory. Set \code{path = FALSE} if you do not wish to save to file.
 #' @param conditional logical. Should conditional (default) or unconditional permutation variable importance be computed. Only applies to \code{RandomForest-class} models from the \code{\link[party]{party}} package.
 #' @param overwrite Should the function overwrite data to location in \code{path}? Default is \code{'no'}, which will run the analysis if no file exists. If file in \code{path} exists, user with be prompted to set new path or allow file to be overwritten. Set to \code{'yes'} to automatically overwrite existing file, and \code{'reload'} to automatically reload existing file.
+#' @param verbose Should messages be printed? Default is \code{FALSE}
 #'
 #' @author Jason Grafmiller
 #'
@@ -34,7 +35,7 @@
 #'
 #' line3 <- vadis_line3(rf_list, path = FALSE)
 #' }
-vadis_line3 <- function(mod_object, path = NULL, conditional = TRUE, overwrite = c("no", "yes", "reload")){
+vadis_line3 <- function(mod_object, path = NULL, conditional = TRUE, overwrite = c("no", "yes", "reload"), verbose = FALSE){
 
   overwrite <- match.arg(overwrite)
 
@@ -49,7 +50,7 @@ vadis_line3 <- function(mod_object, path = NULL, conditional = TRUE, overwrite =
     } else if (is.list(mod_object)){
       if(conditional == TRUE & class(mod_object[[1]]) != "RandomForest"){
         conditional <- FALSE
-        message("Conditional variable importances are only available for {party} random forests. Setting conditional = FALSE")
+        if(verbose) message("Conditional variable importances are only available for {party} random forests. Setting conditional = FALSE")
       }
       raw_tab <- create_rank_table(mod_object, conditional = conditional) # call function to create varimp rankings
     } else {
@@ -80,7 +81,7 @@ vadis_line3 <- function(mod_object, path = NULL, conditional = TRUE, overwrite =
                             "similarity.scores")
   } else if(overwrite == "reload" & file.exists(path)){
     # reload from existing file
-    message(paste("Loading existing file", path, "\nSet `overwrite = 'yes' or choose new path to calculate new values."))
+    if(verbose) message(paste("Loading existing file", path, "\nSet `overwrite = 'yes' or choose new path to calculate new values."))
     output_list <- readRDS(path)
   } else {
     output_list <- vector("list")
@@ -118,7 +119,7 @@ vadis_line3 <- function(mod_object, path = NULL, conditional = TRUE, overwrite =
 
   if(is.character(path)){
     if(overwrite == "yes"){
-      if(file.exists(path)) message("Existing file", path, "will be overwritten. Set overwrite = 'reload' to reload existing file.")
+      if(file.exists(path) & verbose == TRUE) message("Existing file", path, "will be overwritten. Set overwrite = 'reload' to reload existing file.")
       saveRDS(output_list, file = path)
     } else if(overwrite == "no" & file.exists(path)) {
       msg <- paste("File", path, "already exists. Overwrite (y/n)?: ")
